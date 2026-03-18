@@ -1,8 +1,9 @@
 export type User = {
   id: string;
-  email: string;
-  fullName: string;
-  profileImage?: string;
+  phone?: string | null;
+  email?: string | null;
+  fullName: string | null;
+  profileImage?: string | null;
   status: 'active' | 'notActive' | 'banned';
 };
 

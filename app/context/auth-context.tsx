@@ -1,21 +1,22 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { User } from '@/types';
 import * as authService from '@/services/auth';
+import { setStoredToken, clearStoredToken } from '@/services/api-client';
 
-// TODO: Replace in-memory state with AsyncStorage when @react-native-async-storage/async-storage is installed
-// import AsyncStorage from '@react-native-async-storage/async-storage';
-// const TOKEN_KEY = '@cattlecare_token';
-// const USER_KEY = '@cattlecare_user';
+const TOKEN_KEY = '@cattlecare_token';
+const USER_KEY = '@cattlecare_user';
 
 type AuthContextType = {
   user: User | null;
   token: string | null;
   isLoggedIn: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, fullName: string) => Promise<void>;
-  logout: () => void;
-  updateUser: (data: Partial<User>) => Promise<void>;
+  sendOtp: (phone: string) => Promise<void>;
+  verifyOtp: (phone: string, otp: string) => Promise<{ isNewUser: boolean }>;
+  googleLogin: (idToken: string) => Promise<{ isNewUser: boolean }>;
+  logout: () => Promise<void>;
+  updateUser: (data: { fullName?: string; image?: string }) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -23,60 +24,71 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  // Start true so auth guard waits until initialization is complete
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // TODO: restore session from AsyncStorage here
-    // For now, just mark init as done after one tick
-    setIsLoading(false);
-  }, []);
-
-  const login = useCallback(async (email: string, password: string) => {
-    setIsLoading(true);
-    try {
-      const result = await authService.login(email, password);
-      setUser(result.user);
-      setToken(result.token);
-      // TODO: persist to AsyncStorage
-      // await AsyncStorage.setItem(TOKEN_KEY, result.token);
-      // await AsyncStorage.setItem(USER_KEY, JSON.stringify(result.user));
-    } finally {
-      setIsLoading(false);
+    async function restoreSession() {
+      try {
+        const [storedToken, storedUser] = await Promise.all([
+          AsyncStorage.getItem(TOKEN_KEY),
+          AsyncStorage.getItem(USER_KEY),
+        ]);
+        if (storedToken && storedUser) {
+          setToken(storedToken);
+          setUser(JSON.parse(storedUser) as User);
+        }
+      } catch {
+        // ignore
+      } finally {
+        setIsLoading(false);
+      }
     }
+    restoreSession();
   }, []);
 
-  const register = useCallback(async (email: string, password: string, fullName: string) => {
-    setIsLoading(true);
-    try {
-      const result = await authService.register(email, password, fullName);
-      setUser(result.user);
-      setToken(result.token);
-      // TODO: persist to AsyncStorage
-      // await AsyncStorage.setItem(TOKEN_KEY, result.token);
-      // await AsyncStorage.setItem(USER_KEY, JSON.stringify(result.user));
-    } finally {
-      setIsLoading(false);
-    }
+  async function persistSession(u: User, t: string) {
+    await Promise.all([
+      AsyncStorage.setItem(TOKEN_KEY, t),
+      AsyncStorage.setItem(USER_KEY, JSON.stringify(u)),
+      setStoredToken(t),
+    ]);
+    setUser(u);
+    setToken(t);
+  }
+
+  const sendOtp = useCallback(async (phone: string) => {
+    await authService.sendOtp(phone);
   }, []);
 
-  const logout = useCallback(() => {
+  const verifyOtp = useCallback(async (phone: string, otp: string) => {
+    const result = await authService.verifyOtp(phone, otp);
+    await persistSession(result.user, result.token);
+    return { isNewUser: result.isNewUser };
+  }, []);
+
+  const googleLogin = useCallback(async (idToken: string) => {
+    const result = await authService.googleLogin(idToken);
+    await persistSession(result.user, result.token);
+    return { isNewUser: result.isNewUser };
+  }, []);
+
+  const logout = useCallback(async () => {
+    await Promise.all([
+      AsyncStorage.removeItem(TOKEN_KEY),
+      AsyncStorage.removeItem(USER_KEY),
+      clearStoredToken(),
+    ]);
     setUser(null);
     setToken(null);
-    // TODO: clear AsyncStorage
-    // AsyncStorage.removeItem(TOKEN_KEY);
-    // AsyncStorage.removeItem(USER_KEY);
   }, []);
 
   const updateUser = useCallback(
-    async (data: Partial<User>) => {
-      if (!user) return;
-      const updated = await authService.updateProfile(user.id, data);
+    async (data: { fullName?: string; image?: string }) => {
+      const updated = await authService.updateProfile(data);
       setUser(updated);
-      // TODO: update AsyncStorage
-      // await AsyncStorage.setItem(USER_KEY, JSON.stringify(updated));
+      await AsyncStorage.setItem(USER_KEY, JSON.stringify(updated));
     },
-    [user]
+    [],
   );
 
   return (
@@ -86,8 +98,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         token,
         isLoggedIn: !!token,
         isLoading,
-        login,
-        register,
+        sendOtp,
+        verifyOtp,
+        googleLogin,
         logout,
         updateUser,
       }}

@@ -20,6 +20,8 @@ import { Colors } from '@/constants/theme';
 import { useAuth } from '@/hooks/use-auth';
 import { MenuRow } from '@/components/menu-row';
 import { StatusBar } from 'expo-status-bar';
+import { useTranslation } from 'react-i18next';
+import { changeLanguage, LANGUAGES, type LangCode } from '@/i18n';
 
 type BottomSheetType = 'editProfile' | 'changePassword' | 'language' | null;
 
@@ -34,16 +36,17 @@ function SectionLabel({ label }: { label: string }) {
 export default function SettingsScreen() {
   const router = useRouter();
   const { user, logout, updateUser } = useAuth();
+  const { t, i18n } = useTranslation();
   const [activeSheet, setActiveSheet] = useState<BottomSheetType>(null);
 
   function handleLogout() {
-    Alert.alert('Log Out', 'Are you sure you want to log out?', [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('settings.logOutConfirmTitle'), t('settings.logOutConfirmMsg'), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: 'Log Out',
+        text: t('settings.logOut'),
         style: 'destructive',
-        onPress: () => {
-          logout();
+        onPress: async () => {
+          await logout();
           router.replace('/onboarding');
         },
       },
@@ -51,11 +54,11 @@ export default function SettingsScreen() {
   }
 
   function handleHelp() {
-    Alert.alert('Help & Support', 'For support, email: support@cattlecare.in\n\nVersion 1.0.0');
+    Alert.alert(t('settings.helpTitle'), t('settings.helpMsg'));
   }
 
   function handleContact() {
-    Alert.alert('Contact Us', 'Email: hello@cattlecare.in\nPhone: +91 98765 43210');
+    Alert.alert(t('settings.contactUs'), t('settings.contactMsg'));
   }
 
   const initials = user?.fullName
@@ -72,7 +75,7 @@ export default function SettingsScreen() {
       <StatusBar style="dark" />
       <View style={styles.statusBarSeparator} />
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Settings</Text>
+        <Text style={styles.headerTitle}>{t('settings.title')}</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -102,7 +105,7 @@ export default function SettingsScreen() {
                   { color: user?.status === 'active' ? Colors.primary : Colors.gray400 },
                 ]}
               >
-                {user?.status === 'active' ? 'Active' : 'Inactive'}
+                {user?.status === 'active' ? t('settings.active') : t('settings.inactive')}
               </Text>
             </View>
           </View>
@@ -115,73 +118,71 @@ export default function SettingsScreen() {
         </View>
 
         {/* Account Section */}
-        <SectionLabel label="ACCOUNT" />
+        <SectionLabel label={t('settings.sectionAccount')} />
         <View style={styles.menuGroup}>
           <MenuRow
             icon="person-outline"
             iconColor={Colors.primary}
-            label="Edit Profile"
+            label={t('settings.editProfile')}
             onPress={() => setActiveSheet('editProfile')}
           />
           <Divider />
           <MenuRow
             icon="lock-closed-outline"
             iconColor={Colors.info}
-            label="Change Password"
+            label={t('settings.changePassword')}
             onPress={() => setActiveSheet('changePassword')}
           />
           <Divider />
           <MenuRow
             icon="language-outline"
             iconColor={Colors.warning}
-            label="Language"
-            value="English"
+            label={t('settings.language')}
+            value={LANGUAGES.find((l) => l.code === i18n.language)?.label ?? 'English'}
             onPress={() => setActiveSheet('language')}
           />
         </View>
 
         {/* Support Section */}
-        <SectionLabel label="SUPPORT" />
+        <SectionLabel label={t('settings.sectionSupport')} />
         <View style={styles.menuGroup}>
           <MenuRow
             icon="help-circle-outline"
             iconColor={Colors.gray600}
-            label="Help & FAQ"
+            label={t('settings.helpFaq')}
             onPress={handleHelp}
           />
           <Divider />
           <MenuRow
             icon="chatbubble-ellipses-outline"
             iconColor={Colors.gray600}
-            label="Contact Us"
+            label={t('settings.contactUs')}
             onPress={handleContact}
           />
           <Divider />
           <MenuRow
             icon="information-circle-outline"
             iconColor={Colors.gray600}
-            label="About CattleCare"
+            label={t('settings.about')}
             value="v1.0.0"
-            onPress={() =>
-              Alert.alert('About CattleCare', 'CattleCare v1.0.0\nBuilt with love for Indian farmers.\n\n© 2026 CattleCare AI')
-            }
+            onPress={() => Alert.alert(t('settings.about'), t('settings.aboutMsg'))}
           />
         </View>
 
         {/* Danger Zone */}
-        <SectionLabel label="ACCOUNT ACTIONS" />
+        <SectionLabel label={t('settings.sectionActions')} />
         <View style={styles.menuGroup}>
           <MenuRow
             icon="log-out-outline"
             iconColor={Colors.danger}
-            label="Log Out"
+            label={t('settings.logOut')}
             onPress={handleLogout}
             destructive
             showChevron={false}
           />
         </View>
 
-        <Text style={styles.versionNote}>CattleCare AI · Version 1.0.0</Text>
+        <Text style={styles.versionNote}>{t('settings.version')}</Text>
       </ScrollView>
 
       {/* Bottom Sheets */}
@@ -189,7 +190,7 @@ export default function SettingsScreen() {
         visible={activeSheet === 'editProfile'}
         onClose={() => setActiveSheet(null)}
         currentName={user?.fullName ?? ''}
-        onSave={async (name) => {
+        onSave={async (name: string) => {
           await updateUser({ fullName: name });
           setActiveSheet(null);
         }}
@@ -221,6 +222,7 @@ function EditProfileSheet({
   currentName: string;
   onSave: (name: string) => Promise<void>;
 }) {
+  const { t } = useTranslation();
   const [name, setName] = useState(currentName);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
@@ -230,8 +232,8 @@ function EditProfileSheet({
   }, [visible, currentName]);
 
   async function handleSave() {
-    if (!name.trim()) { setError('Name is required'); return; }
-    if (name.trim().length < 2) { setError('Name must be at least 2 characters'); return; }
+    if (!name.trim()) { setError(t('settings.nameRequired')); return; }
+    if (name.trim().length < 2) { setError(t('settings.nameMinLength')); return; }
     setIsSaving(true);
     try {
       await onSave(name.trim());
@@ -241,16 +243,16 @@ function EditProfileSheet({
   }
 
   return (
-    <BottomSheetModal visible={visible} onClose={onClose} title="Edit Profile">
+    <BottomSheetModal visible={visible} onClose={onClose} title={t('settings.editProfile')}>
       <View style={sheetStyles.content}>
-        <Text style={sheetStyles.label}>Full Name</Text>
+        <Text style={sheetStyles.label}>{t('settings.fullNameLabel')}</Text>
         <View style={[sheetStyles.inputWrapper, error ? sheetStyles.inputError : null]}>
           <Ionicons name="person-outline" size={18} color={Colors.gray400} />
           <TextInput
             style={sheetStyles.input}
             value={name}
-            onChangeText={(t) => { setName(t); setError(''); }}
-            placeholder="Your full name"
+            onChangeText={(v) => { setName(v); setError(''); }}
+            placeholder={t('settings.fullNamePlaceholder')}
             placeholderTextColor={Colors.gray400}
             autoCapitalize="words"
           />
@@ -264,7 +266,7 @@ function EditProfileSheet({
           {isSaving ? (
             <ActivityIndicator color={Colors.white} />
           ) : (
-            <Text style={sheetStyles.saveButtonText}>Save Changes</Text>
+            <Text style={sheetStyles.saveButtonText}>{t('settings.saveChanges')}</Text>
           )}
         </TouchableOpacity>
       </View>
@@ -275,62 +277,63 @@ function EditProfileSheet({
 // ─── Change Password Sheet ────────────────────────────────────────────────────
 
 function ChangePasswordSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+  const { t } = useTranslation();
   const [current, setCurrent] = useState('');
   const [newPass, setNewPass] = useState('');
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState('');
 
   function handleSave() {
-    if (!current) { setError('Current password is required'); return; }
-    if (!newPass || newPass.length < 6) { setError('New password must be at least 6 characters'); return; }
-    if (newPass !== confirm) { setError('Passwords do not match'); return; }
-    Alert.alert('Success', 'Password changed successfully.', [
-      { text: 'OK', onPress: () => { setCurrent(''); setNewPass(''); setConfirm(''); setError(''); onClose(); } },
+    if (!current) { setError(t('settings.currentPasswordRequired')); return; }
+    if (!newPass || newPass.length < 6) { setError(t('settings.newPasswordMinLength')); return; }
+    if (newPass !== confirm) { setError(t('settings.passwordsMismatch')); return; }
+    Alert.alert('✓', t('settings.passwordChanged'), [
+      { text: t('common.ok'), onPress: () => { setCurrent(''); setNewPass(''); setConfirm(''); setError(''); onClose(); } },
     ]);
   }
 
   return (
-    <BottomSheetModal visible={visible} onClose={onClose} title="Change Password">
+    <BottomSheetModal visible={visible} onClose={onClose} title={t('settings.changePassword')}>
       <View style={sheetStyles.content}>
-        <Text style={sheetStyles.label}>Current Password</Text>
+        <Text style={sheetStyles.label}>{t('settings.currentPassword')}</Text>
         <View style={sheetStyles.inputWrapper}>
           <Ionicons name="lock-closed-outline" size={18} color={Colors.gray400} />
           <TextInput
             style={sheetStyles.input}
             value={current}
-            onChangeText={(t) => { setCurrent(t); setError(''); }}
-            placeholder="Enter current password"
+            onChangeText={(v) => { setCurrent(v); setError(''); }}
+            placeholder={t('settings.currentPasswordPlaceholder')}
             placeholderTextColor={Colors.gray400}
             secureTextEntry
           />
         </View>
-        <Text style={sheetStyles.label}>New Password</Text>
+        <Text style={sheetStyles.label}>{t('settings.newPassword')}</Text>
         <View style={sheetStyles.inputWrapper}>
           <Ionicons name="lock-open-outline" size={18} color={Colors.gray400} />
           <TextInput
             style={sheetStyles.input}
             value={newPass}
-            onChangeText={(t) => { setNewPass(t); setError(''); }}
-            placeholder="Min. 6 characters"
+            onChangeText={(v) => { setNewPass(v); setError(''); }}
+            placeholder={t('settings.newPasswordPlaceholder')}
             placeholderTextColor={Colors.gray400}
             secureTextEntry
           />
         </View>
-        <Text style={sheetStyles.label}>Confirm New Password</Text>
+        <Text style={sheetStyles.label}>{t('settings.confirmPassword')}</Text>
         <View style={sheetStyles.inputWrapper}>
           <Ionicons name="lock-open-outline" size={18} color={Colors.gray400} />
           <TextInput
             style={sheetStyles.input}
             value={confirm}
-            onChangeText={(t) => { setConfirm(t); setError(''); }}
-            placeholder="Re-enter new password"
+            onChangeText={(v) => { setConfirm(v); setError(''); }}
+            placeholder={t('settings.confirmPasswordPlaceholder')}
             placeholderTextColor={Colors.gray400}
             secureTextEntry
           />
         </View>
         {error ? <Text style={sheetStyles.errorText}>{error}</Text> : null}
         <TouchableOpacity style={sheetStyles.saveButton} onPress={handleSave}>
-          <Text style={sheetStyles.saveButtonText}>Update Password</Text>
+          <Text style={sheetStyles.saveButtonText}>{t('settings.updatePassword')}</Text>
         </TouchableOpacity>
       </View>
     </BottomSheetModal>
@@ -340,29 +343,27 @@ function ChangePasswordSheet({ visible, onClose }: { visible: boolean; onClose: 
 // ─── Language Sheet ───────────────────────────────────────────────────────────
 
 function LanguageSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
-  const [selected, setSelected] = useState('en');
+  const { t, i18n } = useTranslation();
+  const [selected, setSelected] = useState<LangCode>(i18n.language as LangCode);
 
-  const languages = [
-    { code: 'en', label: 'English', native: 'English' },
-    { code: 'hi', label: 'Hindi', native: 'हिंदी (Coming soon)' },
-  ];
+  React.useEffect(() => {
+    if (visible) setSelected(i18n.language as LangCode);
+  }, [visible, i18n.language]);
+
+  async function handleSelect(code: LangCode) {
+    setSelected(code);
+    await changeLanguage(code);
+    setTimeout(onClose, 300);
+  }
 
   return (
-    <BottomSheetModal visible={visible} onClose={onClose} title="Select Language">
+    <BottomSheetModal visible={visible} onClose={onClose} title={t('settings.selectLanguage')}>
       <View style={sheetStyles.content}>
-        {languages.map((lang) => (
+        {LANGUAGES.map((lang) => (
           <TouchableOpacity
             key={lang.code}
             style={[sheetStyles.langOption, selected === lang.code && sheetStyles.langOptionActive]}
-            onPress={() => {
-              setSelected(lang.code);
-              if (lang.code === 'hi') {
-                Alert.alert('Coming Soon', 'Hindi language support will be added soon.');
-                setSelected('en');
-              } else {
-                setTimeout(onClose, 300);
-              }
-            }}
+            onPress={() => handleSelect(lang.code)}
           >
             <View>
               <Text style={[sheetStyles.langLabel, selected === lang.code && sheetStyles.langLabelActive]}>

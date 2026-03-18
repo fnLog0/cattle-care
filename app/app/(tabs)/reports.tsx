@@ -18,12 +18,14 @@ import { StressBadge } from '@/components/stress-badge';
 import { EmptyState } from '@/components/empty-state';
 import { StressLevel } from '@/types';
 import { StatusBar } from 'expo-status-bar';
+import { useTranslation } from 'react-i18next';
 
 const STRESS_LEVELS: StressLevel[] = ['danger', 'severe', 'moderate', 'mild', 'none'];
 
 export default function ReportsScreen() {
   const router = useRouter();
   const { summary, atRisk, isLoading, refresh } = useReports();
+  const { t } = useTranslation();
   const [refreshing, setRefreshing] = useState(false);
 
   const handleRefresh = useCallback(async () => {
@@ -38,11 +40,11 @@ export default function ReportsScreen() {
         <StatusBar style="dark" />
         <View style={styles.statusBarSeparator} />
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Reports</Text>
+          <Text style={styles.headerTitle}>{t('tabs.reports')}</Text>
         </View>
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={Colors.primary} />
-          <Text style={styles.loadingText}>Loading reports...</Text>
+          <Text style={styles.loadingText}>{t('reports.loading')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -51,8 +53,8 @@ export default function ReportsScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Herd Reports</Text>
-        <Text style={styles.headerSubtitle}>Overview of your livestock health</Text>
+        <Text style={styles.headerTitle}>{t('reports.title')}</Text>
+        <Text style={styles.headerSubtitle}>{t('reports.subtitle')}</Text>
       </View>
 
       <ScrollView
@@ -74,18 +76,18 @@ export default function ReportsScreen() {
                 <Ionicons name="paw" size={22} color={Colors.primary} />
               </View>
               <View>
-                <Text style={styles.overviewTitle}>Herd Overview</Text>
-                <Text style={styles.overviewSubtitle}>Total animals: {summary.totalCattle}</Text>
+                <Text style={styles.overviewTitle}>{t('reports.herdOverview')}</Text>
+                <Text style={styles.overviewSubtitle}>{t('reports.totalAnimals', { count: summary.totalCattle })}</Text>
               </View>
               <View style={styles.totalBadge}>
                 <Text style={styles.totalBadgeText}>{summary.totalCattle}</Text>
-                <Text style={styles.totalBadgeLabel}>Total</Text>
+                <Text style={styles.totalBadgeLabel}>{t('reports.total')}</Text>
               </View>
             </View>
 
             {/* Stress distribution */}
             <View style={styles.distributionSection}>
-              <Text style={styles.distributionTitle}>Stress Distribution</Text>
+              <Text style={styles.distributionTitle}>{t('reports.stressDistribution')}</Text>
               <View style={styles.distributionBars}>
                 {STRESS_LEVELS.map((level) => {
                   const count = summary.stressDistribution[level] ?? 0;
@@ -106,24 +108,18 @@ export default function ReportsScreen() {
             {/* Summary circles */}
             <View style={styles.summaryCircles}>
               <SummaryCircle
-                count={
-                  (summary.stressDistribution['none'] ?? 0) +
-                  (summary.stressDistribution['mild'] ?? 0)
-                }
-                label="Healthy"
+                count={(summary.stressDistribution['none'] ?? 0) + (summary.stressDistribution['mild'] ?? 0)}
+                label={t('reports.healthy')}
                 color={Colors.primary}
               />
               <SummaryCircle
                 count={summary.stressDistribution['moderate'] ?? 0}
-                label="Moderate"
+                label={t('reports.moderate')}
                 color={Colors.warning}
               />
               <SummaryCircle
-                count={
-                  (summary.stressDistribution['severe'] ?? 0) +
-                  (summary.stressDistribution['danger'] ?? 0)
-                }
-                label="At Risk"
+                count={(summary.stressDistribution['severe'] ?? 0) + (summary.stressDistribution['danger'] ?? 0)}
+                label={t('reports.atRisk')}
                 color={Colors.danger}
               />
             </View>
@@ -134,7 +130,7 @@ export default function ReportsScreen() {
         <View style={styles.atRiskSection}>
           <View style={styles.sectionHeader}>
             <Ionicons name="alert-circle" size={20} color={Colors.danger} />
-            <Text style={styles.sectionTitle}>Needs Attention</Text>
+            <Text style={styles.sectionTitle}>{t('reports.needsAttention')}</Text>
             {atRisk.length > 0 && (
               <View style={styles.atRiskBadge}>
                 <Text style={styles.atRiskBadgeText}>{atRisk.length}</Text>
@@ -145,10 +141,8 @@ export default function ReportsScreen() {
           {atRisk.length === 0 ? (
             <View style={styles.noAtRisk}>
               <Ionicons name="checkmark-circle" size={40} color={Colors.primary} />
-              <Text style={styles.noAtRiskTitle}>All Clear!</Text>
-              <Text style={styles.noAtRiskText}>
-                No cattle require immediate attention. Keep up the good work!
-              </Text>
+              <Text style={styles.noAtRiskTitle}>{t('reports.allClear')}</Text>
+              <Text style={styles.noAtRiskText}>{t('reports.allClearMsg')}</Text>
             </View>
           ) : (
             <View style={styles.atRiskList}>
@@ -198,9 +192,9 @@ export default function ReportsScreen() {
         {!summary && (
           <EmptyState
             icon="bar-chart-outline"
-            title="No data yet"
-            message="Add cattle to your herd to see health reports."
-            actionLabel="Add Cattle"
+            title={t('reports.noDataTitle')}
+            message={t('reports.noDataMsg')}
+            actionLabel={t('common.addCattle')}
             onAction={() => router.push('/cattle/create' as any)}
           />
         )}
@@ -220,11 +214,12 @@ function DistributionRow({
   total: number;
   percentage: number;
 }) {
+  const { t } = useTranslation();
   const color = STRESS_COLORS[level];
   return (
     <View style={distributionStyles.row}>
       <View style={[distributionStyles.dot, { backgroundColor: color }]} />
-      <Text style={distributionStyles.label}>{STRESS_LABELS[level]}</Text>
+      <Text style={distributionStyles.label}>{t(`stress.${level}`)}</Text>
       <View style={distributionStyles.barTrack}>
         <View
           style={[

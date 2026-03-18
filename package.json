@@ -3,8 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "app": "pnpm --filter app",
-    "backend": "pnpm --filter backend-old"
+    "app:dev": "pnpm --filter app start",
+    "backend:dev": "pnpm --filter backend dev",
+    "backend:deploy": "pnpm --filter backend deploy",
+    "backend:db:reset": "pnpm --filter backend db:reset"
   },
   "engines": {
     "node": ">=18",

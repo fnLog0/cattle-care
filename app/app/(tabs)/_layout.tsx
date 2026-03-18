@@ -1,11 +1,13 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 
 import { HapticTab } from '@/components/haptic-tab';
 import { Colors } from '@/constants/theme';
 
 export default function TabLayout() {
+  const { t } = useTranslation();
   return (
     <Tabs
       screenOptions={{
@@ -31,7 +33,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Herd',
+          title: t('tabs.herd'),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="paw" size={size} color={color} />
           ),
@@ -40,7 +42,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="reports"
         options={{
-          title: 'Reports',
+          title: t('tabs.reports'),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="bar-chart" size={size} color={color} />
           ),
@@ -49,7 +51,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="settings"
         options={{
-          title: 'Settings',
+          title: t('tabs.settings'),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="settings" size={size} color={color} />
           ),

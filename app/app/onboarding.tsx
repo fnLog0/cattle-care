@@ -11,11 +11,13 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
 import { StatusBar } from 'expo-status-bar';
+import { useTranslation } from 'react-i18next';
 
 const { height } = Dimensions.get('window');
 
 export default function OnboardingScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
 
   return (
     <SafeAreaView style={styles.container}>
@@ -26,16 +28,14 @@ export default function OnboardingScreen() {
           <Ionicons name="leaf" size={64} color={Colors.white} />
         </View>
         <Text style={styles.appName}>CattleCare</Text>
-        <Text style={styles.tagline}>Smart livestock monitoring{'\n'}powered by AI</Text>
-        <Text style={styles.subTagline}>
-          Track health, detect stress early, and keep your herd thriving.
-        </Text>
+        <Text style={styles.tagline}>{t('onboarding.tagline')}</Text>
+        <Text style={styles.subTagline}>{t('onboarding.subTagline')}</Text>
       </View>
 
       <View style={styles.featuresSection}>
-        <FeatureRow icon="pulse" label="Real-time vitals monitoring" />
-        <FeatureRow icon="shield-checkmark" label="AI-powered stress detection" />
-        <FeatureRow icon="notifications" label="Early warning alerts" />
+        <FeatureRow icon="pulse" label={t('onboarding.feature1')} />
+        <FeatureRow icon="shield-checkmark" label={t('onboarding.feature2')} />
+        <FeatureRow icon="notifications" label={t('onboarding.feature3')} />
       </View>
 
       <View style={styles.buttonsSection}>
@@ -44,7 +44,7 @@ export default function OnboardingScreen() {
           onPress={() => router.push('/login')}
           activeOpacity={0.85}
         >
-          <Text style={styles.primaryButtonText}>Sign In</Text>
+          <Text style={styles.primaryButtonText}>{t('onboarding.signIn')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -52,12 +52,10 @@ export default function OnboardingScreen() {
           onPress={() => router.push('/register')}
           activeOpacity={0.85}
         >
-          <Text style={styles.secondaryButtonText}>Create Account</Text>
+          <Text style={styles.secondaryButtonText}>{t('onboarding.createAccount')}</Text>
         </TouchableOpacity>
 
-        <Text style={styles.disclaimer}>
-          Free for small farms. No credit card required.
-        </Text>
+        <Text style={styles.disclaimer}>{t('onboarding.disclaimer')}</Text>
       </View>
     </SafeAreaView>
   );

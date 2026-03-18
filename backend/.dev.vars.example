@@ -1,0 +1,23 @@
+# Cloudflare Workers local dev secrets
+# Copy to .dev.vars and fill in values
+# Production: use `wrangler secret put <NAME>`
+# Non-secret vars (MSG91_SENDER_ID, MSG91_TEMPLATE_ID, GOOGLE_CLIENT_ID) are in wrangler.jsonc
+
+# MSG91 (https://msg91.com → API Keys)
+MSG91_AUTH_KEY=your_msg91_auth_key_here
+
+# MSG91 (Dashboard → SMS → Templates → copy Template ID)
+MSG91_TEMPLATE_ID=your_msg91_template_id_here
+
+# MSG91 (6-char DLT-approved sender ID)
+MSG91_SENDER_ID=CATTLE
+
+# Google OAuth (https://console.cloud.google.com → APIs & Services → Credentials)
+GOOGLE_CLIENT_ID=your_google_client_id_here
+GOOGLE_CLIENT_SECRET=your_google_client_secret_here
+
+# JWT signing secret (any strong random string)
+JWT_SECRET=your_jwt_secret_here
+
+# Set to 'true' to skip MSG91 and use OTP 1234 locally (never set in production)
+DEV_MODE=true

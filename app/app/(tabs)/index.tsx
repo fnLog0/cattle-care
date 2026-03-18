@@ -19,6 +19,7 @@ import { CattleCard } from '@/components/cattle-card';
 import { EmptyState } from '@/components/empty-state';
 import { Cattle } from '@/types';
 import { StatusBar } from 'expo-status-bar';
+import { useTranslation } from 'react-i18next';
 
 function SkeletonCard() {
   return (
@@ -69,6 +70,7 @@ export default function HerdScreen() {
   const { user } = useAuth();
   const { cattle, isLoading, refresh, search } = useCattle();
 
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -113,7 +115,7 @@ export default function HerdScreen() {
               style={styles.searchInput}
               value={searchQuery}
               onChangeText={handleSearch}
-              placeholder="Search by name or ear tag..."
+              placeholder={t('herd.searchPlaceholder')}
               placeholderTextColor={Colors.gray400}
               autoFocus
               returnKeyType="search"
@@ -126,8 +128,8 @@ export default function HerdScreen() {
         ) : (
           <>
             <View style={styles.headerLeft}>
-              <Text style={styles.greeting}>Good morning,</Text>
-              <Text style={styles.userName}>{user?.fullName?.split(' ')[0] ?? 'Farmer'}</Text>
+              <Text style={styles.greeting}>{t('herd.greeting')}</Text>
+              <Text style={styles.userName}>{user?.fullName?.split(' ')[0] ?? t('common.farmer')}</Text>
             </View>
             <TouchableOpacity style={styles.iconBtn} onPress={() => setShowSearch(true)}>
               <Ionicons name="search" size={22} color={Colors.gray800} />
@@ -140,11 +142,11 @@ export default function HerdScreen() {
       {!showSearch && !isLoading && (
         <View style={styles.countRow}>
           <Text style={styles.countText}>
-            {cattle.length} {cattle.length === 1 ? 'animal' : 'animals'} in your herd
+            {t('herd.animals', { count: cattle.length })}
           </Text>
           <View style={styles.sortBadge}>
             <Ionicons name="alert-circle" size={14} color={Colors.warning} />
-            <Text style={styles.sortText}>Sorted by risk</Text>
+            <Text style={styles.sortText}>{t('herd.sortedByRisk')}</Text>
           </View>
         </View>
       )}
@@ -172,13 +174,13 @@ export default function HerdScreen() {
           ListEmptyComponent={
             <EmptyState
               icon="paw-outline"
-              title="No cattle yet"
+              title={t('herd.noCattleTitle')}
               message={
                 searchQuery
-                  ? `No cattle found for "${searchQuery}"`
-                  : 'Add your first animal to start monitoring your herd.'
+                  ? t('herd.noSearchResult', { query: searchQuery })
+                  : t('herd.noCattleMsg')
               }
-              actionLabel={searchQuery ? undefined : 'Add Cattle'}
+              actionLabel={searchQuery ? undefined : t('common.addCattle')}
               onAction={searchQuery ? undefined : () => router.push('/cattle/create' as any)}
             />
           }

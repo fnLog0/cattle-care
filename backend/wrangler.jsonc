@@ -1,0 +1,20 @@
+{
+  "name": "cattle-care-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2024-11-01",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "cattle-care-db",
+      "database_id": "YOUR_DATABASE_ID_HERE"
+    }
+  ],
+  "vars": {
+    "MSG91_SENDER_ID": "CATTLE",
+    "MSG91_TEMPLATE_ID": "",
+    "GOOGLE_CLIENT_ID": ""
+  }
+  // Secrets (run: wrangler secret put <NAME>)
+  // MSG91_AUTH_KEY
+  // JWT_SECRET
+}

@@ -1,31 +1,42 @@
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import 'react-native-reanimated';
+import '@/i18n';
 
 import { AuthProvider } from '@/context/auth-context';
 import { useAuth } from '@/hooks/use-auth';
 import { Colors } from '@/constants/theme';
+import { loadSavedLanguage } from '@/i18n';
 
 function RootLayoutNav() {
   const { isLoggedIn, isLoading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+  const [langChecked, setLangChecked] = useState(false);
+  const [hasLang, setHasLang] = useState(false);
 
   useEffect(() => {
-    if (isLoading) return;
+    loadSavedLanguage().then((found) => {
+      setHasLang(found);
+      setLangChecked(true);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (isLoading || !langChecked) return;
 
     const inAuthGroup = segments[0] === '(tabs)';
-    const inOnboarding = segments[0] === 'onboarding';
-    const inLogin = segments[0] === 'login';
-    const inRegister = segments[0] === 'register';
+    const inPublicScreen = ['onboarding', 'login', 'register', 'otp', 'onboard-name', 'select-language'].includes(segments[0] ?? '');
 
     if (!isLoggedIn && inAuthGroup) {
-      router.replace('/onboarding');
-    } else if (isLoggedIn && (inOnboarding || inLogin || inRegister)) {
+      router.replace(hasLang ? '/onboarding' : '/select-language');
+    } else if (isLoggedIn && inPublicScreen && segments[0] !== 'onboard-name') {
       router.replace('/(tabs)');
+    } else if (!isLoggedIn && !inPublicScreen) {
+      router.replace(hasLang ? '/onboarding' : '/select-language');
     }
-  }, [isLoggedIn, isLoading, segments]);
+  }, [isLoggedIn, isLoading, segments, langChecked, hasLang]);
 
   return (
     <>
@@ -38,9 +49,12 @@ function RootLayoutNav() {
         }}
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="select-language" options={{ headerShown: false }} />
         <Stack.Screen name="onboarding" options={{ headerShown: false }} />
         <Stack.Screen name="login" options={{ headerShown: false }} />
         <Stack.Screen name="register" options={{ headerShown: false }} />
+        <Stack.Screen name="otp" options={{ headerShown: false }} />
+        <Stack.Screen name="onboard-name" options={{ headerShown: false }} />
         <Stack.Screen
           name="cattle/create"
           options={{ title: 'Register Cattle', headerBackTitle: 'Back' }}

@@ -1,49 +1,53 @@
 import { User } from '@/types';
-import { MOCK_USER } from './data';
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// In-memory store for registered users during session
-let currentUser: User | null = null;
-const registeredUsers: Array<{ user: User; password: string }> = [
-  { user: MOCK_USER, password: 'password123' },
+const MOCK_USERS: User[] = [
+  {
+    id: 'user-1',
+    phone: '9876543210',
+    email: 'farmer@cattlecare.in',
+    fullName: 'Rajesh Kumar',
+    profileImage: null,
+    status: 'active',
+  },
 ];
 
-export async function login(
-  email: string,
-  password: string
-): Promise<{ user: User; token: string }> {
-  await delay(600);
+let currentUser: User | null = null;
 
-  // Accept any email/password in mock mode — also check registered users
-  const found = registeredUsers.find((u) => u.user.email.toLowerCase() === email.toLowerCase());
-  if (found) {
-    currentUser = found.user;
-    return { user: found.user, token: `mock-token-${found.user.id}` };
-  }
-
-  // Accept demo credentials always
-  currentUser = { ...MOCK_USER, email };
-  return { user: currentUser, token: `mock-token-fallback` };
+export async function sendOtp(phone: string): Promise<{ requestId: string }> {
+  await delay(500);
+  void phone;
+  return { requestId: 'mock-req-id' };
 }
 
-export async function register(
-  email: string,
-  password: string,
-  fullName: string
-): Promise<{ user: User; token: string }> {
-  await delay(700);
+export async function verifyOtp(
+  phone: string,
+  otp: string,
+): Promise<{ user: User; token: string; isNewUser: boolean }> {
+  await delay(600);
+  if (otp !== '1234') throw new Error('Invalid OTP (mock: use 1234)');
 
-  const newUser: User = {
-    id: `user-${Date.now()}`,
-    email,
-    fullName,
-    status: 'active',
-  };
+  let user = MOCK_USERS.find((u) => u.phone === phone) ?? null;
+  let isNewUser = false;
 
-  registeredUsers.push({ user: newUser, password });
-  currentUser = newUser;
-  return { user: newUser, token: `mock-token-${newUser.id}` };
+  if (!user) {
+    user = { id: `user-${Date.now()}`, phone, email: null, fullName: null, profileImage: null, status: 'active' };
+    MOCK_USERS.push(user);
+    isNewUser = true;
+  }
+
+  currentUser = user;
+  return { user, token: `mock-token-${user.id}`, isNewUser };
+}
+
+export async function googleLogin(
+  _idToken: string,
+): Promise<{ user: User; token: string; isNewUser: boolean }> {
+  await delay(600);
+  const user = MOCK_USERS[0]!;
+  currentUser = user;
+  return { user, token: `mock-token-${user.id}`, isNewUser: false };
 }
 
 export async function getMe(): Promise<User | null> {
@@ -51,13 +55,15 @@ export async function getMe(): Promise<User | null> {
   return currentUser;
 }
 
-export async function updateProfile(userId: string, data: Partial<User>): Promise<User> {
+export async function updateProfile(data: { fullName?: string; image?: string }): Promise<User> {
   await delay(400);
-  const found = registeredUsers.find((u) => u.user.id === userId);
-  if (found) {
-    found.user = { ...found.user, ...data };
-    currentUser = found.user;
-    return found.user;
-  }
-  throw new Error('User not found');
+  if (!currentUser) throw new Error('Not logged in');
+  currentUser = {
+    ...currentUser,
+    fullName: data.fullName ?? currentUser.fullName,
+    profileImage: data.image ?? currentUser.profileImage,
+  };
+  const idx = MOCK_USERS.findIndex((u) => u.id === currentUser!.id);
+  if (idx !== -1) MOCK_USERS[idx] = currentUser;
+  return currentUser;
 }

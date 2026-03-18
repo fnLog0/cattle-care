@@ -13,6 +13,7 @@ CREATE TABLE cattle (
   age INTEGER NOT NULL,
   weight REAL NOT NULL,
   ear_tag TEXT NOT NULL,
+  image_url TEXT,
   stress_level TEXT DEFAULT 'none' CHECK (stress_level IN ('none', 'mild', 'moderate', 'severe', 'danger')),
   user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   created_at TEXT DEFAULT (datetime('now')),
@@ -35,8 +36,8 @@ CREATE INDEX idx_cattle_name ON cattle(name);
 ### Mutations
 | Method | Path | Input (JSON Body) | Output | Auth |
 |--------|------|-------------------|--------|------|
-| `POST` | `/api/cattle` | `{ name, breed, age, weight, earTag }` | `Cattle` | ✅ Yes |
-| `PUT` | `/api/cattle/:id` | `{ name, breed, age, weight, earTag }` | `Cattle` | ✅ Yes |
+| `POST` | `/api/cattle` | `{ name, breed, age, weight, earTag, imageUrl? }` | `Cattle` | ✅ Yes |
+| `PUT` | `/api/cattle/:id` | `{ name, breed, age, weight, earTag, imageUrl? }` | `Cattle` | ✅ Yes |
 | `DELETE` | `/api/cattle/:id` | — | `{ success: true }` | ✅ Yes |
 
 ## Flows
@@ -54,14 +55,45 @@ CREATE INDEX idx_cattle_name ON cattle(name);
 6. Tap card → Cattle Detail screen
 ```
 
-### Create Cattle Flow (via AI Agent)
+### Create Cattle Flow (Simple Form)
 ```
-1. User taps + button
-2. Opens AI Registration Agent chat
-3. Agent collects: name, breed, age, weight, ear tag
-4. Agent shows summary confirmation card
-5. User confirms → POST /api/cattle
-6. Navigate back to Cattle List (new cattle appears)
+1. User taps + FAB button
+2. Opens Add Cattle form screen
+3. Form fields:
+   ┌─────────────────────────────┐
+   │  🐄 Add New Cattle           │
+   │                              │
+   │  ┌───────────────────────┐   │
+   │  │                       │   │
+   │  │   📷 Tap to add photo │   │  ← camera / gallery picker
+   │  │                       │   │
+   │  └───────────────────────┘   │
+   │                              │
+   │  Name:     [  Lakshmi     ]  │  ← text input
+   │  Breed:    [ Zebu ▼       ]  │  ← dropdown picker (zebu/crossBreed/murrah)
+   │  Age:      [ 3        ] yrs  │  ← number pad
+   │  Weight:   [ 450      ] kg   │  ← number pad
+   │  Ear Tag:  [ ET-042      ]   │  ← text input
+   │                              │
+   │  [ ✅ Add to Herd ]          │  ← big green button (48px+ height)
+   └─────────────────────────────┘
+4. Client-side validation (all fields required except photo, breed must be valid enum)
+5. Submit → POST /api/cattle
+6. Success toast → Navigate back to Cattle List (new cattle appears)
+```
+
+**Why form over chat**: Target users are farmers with limited tech experience.
+A form with big inputs, pickers, and number pads is faster and less error-prone
+than a multi-message AI conversation for 5 fixed fields.
+
+### Cattle Photo Upload
+```
+1. Farmer taps photo area → action sheet: "Take Photo" / "Choose from Gallery"
+2. Uses expo-image-picker (camera or media library)
+3. Image resized client-side (max 800px, JPEG 80% quality)
+4. Upload to Cloudflare R2 bucket: PUT /api/upload/cattle-image
+5. Returns imageUrl → attached to POST /api/cattle body
+6. If skipped → default placeholder icon (🐄) shown in list/detail
 ```
 
 ### Search Flow
@@ -84,11 +116,13 @@ CREATE INDEX idx_cattle_name ON cattle(name);
 ## Cattle List Card Display
 ```
 ┌─────────────────────────────┐
-│ 🐄 Lakshmi          [🔴]   │
-│ Breed: Zebu  |  Tag: A-042 │
-│ 🌡️ 39.2°C   💨 55/min     │
+│ ┌─────┐                     │
+│ │ 📷  │ Lakshmi      [🔴]  │
+│ │     │ Zebu  |  Tag: A-042 │
+│ └─────┘ 🌡️ 39.2°C  💨 55  │
 └─────────────────────────────┘
 ```
+- Photo thumbnail (48x48, rounded) or 🐄 placeholder if no image
 
 ## SQL Query Examples
 

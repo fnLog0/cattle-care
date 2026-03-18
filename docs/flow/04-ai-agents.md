@@ -1,65 +1,11 @@
-# Module: AI Agents
+# Module: AI Agent
 
 ## Overview
-Two Claude-powered AI agents enhance the app experience — one for registering cattle conversationally, and one for per-cattle health analysis. Claude API is called from Cloudflare Workers.
+A single Claude-powered AI Health Agent provides per-cattle health analysis and vitals recording through natural chat. Claude API is called from Cloudflare Workers. Cattle registration uses a simple form (see [02-cattle.md](./02-cattle.md)) — no AI needed for 5 fixed fields.
 
 ---
 
-## Agent 1: Registration Agent
-
-### Purpose
-Collects cattle details through natural conversation instead of a traditional form.
-
-### Location
-Create Cattle screen (opened via + button on Cattle List)
-
-### Collected Fields
-| Field | Type | Required | Example |
-|-------|------|----------|---------|
-| name | String | ✅ | "Lakshmi" |
-| breed | Enum | ✅ | "zebu" |
-| age | Int | ✅ | 3 |
-| weight | Float | ✅ | 450.5 |
-| earTag | String | ✅ | "A-042" |
-
-### Flow
-```
-1. User opens Create Cattle chat
-2. Agent greets: "Let's add a new member to your herd! What's their name?"
-3. Agent asks follow-up questions for missing fields
-4. Agent validates each input (e.g., breed must be zebu/crossBreed/murrah)
-5. When all fields collected → agent shows summary card:
-   ┌────────────────────────────┐
-   │ ✅ Ready to add:           │
-   │ Name: Lakshmi              │
-   │ Breed: Zebu                │
-   │ Age: 3 years               │
-   │ Weight: 450.5 kg           │
-   │ Ear Tag: A-042             │
-   │                            │
-   │ [Confirm & Add] [Edit]     │
-   └────────────────────────────┘
-6. User taps Confirm → POST /api/cattle
-7. Navigate back to Cattle List
-```
-
-### System Prompt (Summary)
-```
-You are a cattle registration assistant. Your job is to collect:
-name, breed (zebu/crossBreed/murrah), age, weight, and ear tag.
-Ask conversationally, one or two fields at a time.
-Validate inputs. When all fields are collected, output a structured
-JSON summary and ask for confirmation.
-```
-
-### REST API
-| Method | Path | Input (JSON Body) | Output | Auth |
-|--------|------|-------------------|--------|------|
-| `POST` | `/api/agent/registration` | `{ message, conversationHistory }` | `{ reply, extractedData, isComplete }` | ✅ Yes |
-
----
-
-## Agent 2: Health Agent
+## Health Agent
 
 ### Purpose
 Per-cattle AI advisor that analyzes vitals, assesses stress, and provides actionable health recommendations.

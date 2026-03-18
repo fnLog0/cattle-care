@@ -37,10 +37,13 @@ CattleCare AI is a livestock health monitoring app that uses AI agents (Claude) 
 | Auth | [01-auth.md](./01-auth.md) | Registration, login, Google OAuth, password reset |
 | Cattle | [02-cattle.md](./02-cattle.md) | Cattle CRUD, listing, search |
 | Vitals & Stress | [03-vitals-stress.md](./03-vitals-stress.md) | Vital recording, stress index calculation |
-| AI Agents | [04-ai-agents.md](./04-ai-agents.md) | Registration agent, health agent |
+| AI Agent | [04-ai-agents.md](./04-ai-agents.md) | Health agent (vitals recording + analysis via chat) |
 | Reports | [05-reports.md](./05-reports.md) | Herd analytics, historical data |
 | Settings | [06-settings.md](./06-settings.md) | User profile, preferences |
 | Navigation | [07-navigation.md](./07-navigation.md) | Full app navigation flow |
+| i18n | [08-i18n.md](./08-i18n.md) | Hindi + English language support |
+| LocusGraph Memory | [09-locusgraph-memory.md](./09-locusgraph-memory.md) | Per-cattle AI agent memory via LocusGraph |
+| Autonomous Monitoring | [10-autonomous-monitoring.md](./10-autonomous-monitoring.md) | Future — LangGraph autonomous herd monitoring |
 
 ## Data Flow
 

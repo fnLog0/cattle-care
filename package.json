@@ -1,0 +1,13 @@
+{
+  "name": "cattle-care",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "app": "pnpm --filter app",
+    "backend": "pnpm --filter backend-old"
+  },
+  "engines": {
+    "node": ">=18",
+    "pnpm": ">=9"
+  }
+}

@@ -5,6 +5,7 @@ set -e
 SCHEMAS=(
   src/db/users/schema.sql
   src/db/sessions/schema.sql
+  src/db/cattle/schema.sql
 )
 
 for SCHEMA in "${SCHEMAS[@]}"; do

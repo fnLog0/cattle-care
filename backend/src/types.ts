@@ -13,6 +13,19 @@ export type UserRow = {
   updated_at: string;
 };
 
+export type CattleRow = {
+  id: string;
+  user_id: string;
+  name: string;
+  breed: 'zebu' | 'crossBreed' | 'murrah';
+  age: number;
+  weight: number;
+  ear_tag: string;
+  stress_level: 'none' | 'mild' | 'moderate' | 'severe' | 'danger';
+  created_at: string;
+  updated_at: string;
+};
+
 export type SessionRow = {
   id: string;
   user_id: string;

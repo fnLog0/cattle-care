@@ -1,8 +1,10 @@
 import { z } from 'zod';
 import type { AppContext } from '../../types';
 import { getCattleByIdAndUser, getCattleByEarTag, updateCattle } from '../../db';
+import { getLatestVitalsByCattle } from '../../db/vitals';
 import { getDb } from '../../utils/db';
 import { success, error } from '../../utils/responses';
+import { formatVitals } from './utils';
 
 const UpdateCattleSchema = z.object({
   name: z.string().min(1).max(100).optional(),
@@ -36,6 +38,8 @@ export async function updateCattleHandler(c: AppContext) {
   const row = await updateCattle(db, id, user.id, updates);
   if (!row) return error(c, 'No changes made', 400);
 
+  const latestVitals = await getLatestVitalsByCattle(db, row.id);
+
   return success(c, {
     id: row.id,
     name: row.name,
@@ -46,5 +50,6 @@ export async function updateCattleHandler(c: AppContext) {
     stressLevel: row.stress_level,
     userId: row.user_id,
     createdAt: row.created_at,
+    latestVitals: latestVitals ? formatVitals(latestVitals) : undefined,
   });
 }

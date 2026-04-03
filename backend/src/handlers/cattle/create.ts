@@ -1,8 +1,10 @@
 import { z } from 'zod';
 import type { AppContext } from '../../types';
 import { getCattleByEarTag, createCattle } from '../../db';
+import { getLatestVitalsByCattle } from '../../db/vitals';
 import { getDb } from '../../utils/db';
 import { success, error } from '../../utils/responses';
+import { formatVitals } from './utils';
 
 const CreateCattleSchema = z.object({
   name: z.string().min(1).max(100),
@@ -31,6 +33,8 @@ export async function createCattleHandler(c: AppContext) {
   const row = await createCattle(db, id, user.id, { name, breed, age, weight, earTag });
   if (!row) return error(c, 'Failed to create cattle', 500);
 
+  const latestVitals = await getLatestVitalsByCattle(db, row.id);
+
   return success(
     c,
     {
@@ -43,6 +47,7 @@ export async function createCattleHandler(c: AppContext) {
       stressLevel: row.stress_level,
       userId: row.user_id,
       createdAt: row.created_at,
+      latestVitals: latestVitals ? formatVitals(latestVitals) : undefined,
     },
     201,
   );

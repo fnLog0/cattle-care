@@ -6,6 +6,7 @@ SCHEMAS=(
   src/db/users/schema.sql
   src/db/sessions/schema.sql
   src/db/cattle/schema.sql
+  src/db/vitals/schema.sql
 )
 
 for SCHEMA in "${SCHEMAS[@]}"; do

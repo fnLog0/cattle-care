@@ -16,17 +16,10 @@ import { useAgent } from '@/hooks/use-agent';
 import { useAuth } from '@/hooks/use-auth';
 import { ChatBubble } from '@/components/chat-bubble';
 import { ChatInput } from '@/components/chat-input';
-import { QuickChips } from '@/components/quick-chips';
 import { SummaryCard } from '@/components/summary-card';
 import * as cattleService from '@/services/cattle';
 import { Message } from '@/types';
 import { StatusBar } from 'expo-status-bar';
-
-const BREED_CHIPS = [
-  { label: 'Zebu', value: 'Zebu' },
-  { label: 'Cross Breed', value: 'Cross Breed' },
-  { label: 'Murrah', value: 'Murrah' },
-];
 
 function TypingIndicator() {
   return (
@@ -45,25 +38,15 @@ function TypingIndicator() {
 export default function CreateCattleScreen() {
   const router = useRouter();
   const { user } = useAuth();
-  const { messages, isTyping, sendMessage, registrationState, isRegistrationComplete, resetChat } =
+  const { messages, isTyping, sendMessage, isRegistrationComplete, cattleData, resetChat } =
     useAgent('registration');
 
   const flatListRef = useRef<FlatList>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [showSummary, setShowSummary] = useState(false);
-
-  // Show summary card when confirm step reached
-  React.useEffect(() => {
-    if (registrationState.step === 'confirm') {
-      setShowSummary(true);
-    }
-  }, [registrationState.step]);
 
   const handleSend = useCallback(
     (text: string) => {
-      setShowSummary(false);
       sendMessage(text);
-      // Scroll to bottom after a short delay
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true });
       }, 100);
@@ -72,14 +55,7 @@ export default function CreateCattleScreen() {
   );
 
   const handleConfirm = useCallback(async () => {
-    const { collected } = registrationState;
-    if (
-      !collected.name ||
-      !collected.breed ||
-      collected.age === undefined ||
-      collected.weight === undefined ||
-      !collected.earTag
-    ) {
+    if (!cattleData) {
       Alert.alert('Incomplete', 'Please complete all required fields.');
       return;
     }
@@ -87,14 +63,14 @@ export default function CreateCattleScreen() {
     setIsSaving(true);
     try {
       await cattleService.addCattle({
-        name: collected.name,
-        breed: collected.breed as any,
-        age: collected.age,
-        weight: collected.weight,
-        earTag: collected.earTag,
+        name: cattleData.name,
+        breed: cattleData.breed as any,
+        age: cattleData.age,
+        weight: cattleData.weight,
+        earTag: cattleData.earTag,
         userId: user?.id ?? 'user-1',
       });
-      Alert.alert('Success!', `${collected.name} has been added to your herd.`, [
+      Alert.alert('Success!', `${cattleData.name} has been added to your herd.`, [
         { text: 'Go to Herd', onPress: () => router.replace('/(tabs)') },
       ]);
     } catch {
@@ -102,16 +78,11 @@ export default function CreateCattleScreen() {
     } finally {
       setIsSaving(false);
     }
-  }, [registrationState, user, router]);
+  }, [cattleData, user, router]);
 
   const handleEdit = useCallback(() => {
-    setShowSummary(false);
     resetChat();
   }, [resetChat]);
-
-  // Determine chips to show based on step
-  const chips =
-    registrationState.step === 'breed' && !isTyping ? BREED_CHIPS : [];
 
   const renderItem = useCallback(
     ({ item }: { item: Message }) => <ChatBubble message={item} />,
@@ -148,9 +119,9 @@ export default function CreateCattleScreen() {
           ListFooterComponent={
             <>
               {isTyping && <TypingIndicator />}
-              {showSummary && !isTyping && (
+              {isRegistrationComplete && cattleData && !isTyping && (
                 <SummaryCard
-                  data={registrationState.collected}
+                  data={cattleData}
                   onConfirm={handleConfirm}
                   onEdit={handleEdit}
                   isLoading={isSaving}
@@ -160,29 +131,12 @@ export default function CreateCattleScreen() {
           }
         />
 
-        {!showSummary && (
-          <>
-            {chips.length > 0 && (
-              <QuickChips chips={chips} onSelect={handleSend} disabled={isTyping} />
-            )}
-            <ChatInput
-              onSend={handleSend}
-              disabled={isTyping || isSaving || isRegistrationComplete}
-              placeholder={
-                registrationState.step === 'name'
-                  ? 'Enter cattle name...'
-                  : registrationState.step === 'breed'
-                  ? 'Enter breed or tap a chip...'
-                  : registrationState.step === 'age'
-                  ? 'Enter age in years...'
-                  : registrationState.step === 'weight'
-                  ? 'Enter weight in kg...'
-                  : registrationState.step === 'earTag'
-                  ? 'Enter ear tag (e.g. ET-011)...'
-                  : 'Type a message...'
-              }
-            />
-          </>
+        {!isRegistrationComplete && (
+          <ChatInput
+            onSend={handleSend}
+            disabled={isTyping || isSaving}
+            placeholder="Type your answer..."
+          />
         )}
       </KeyboardAvoidingView>
     </SafeAreaView>

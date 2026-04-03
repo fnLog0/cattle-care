@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { Message, Cattle } from '@/types';
 import * as agentService from '@/services/agent';
 import { RegistrationState } from '@/services/agent';
@@ -6,6 +6,8 @@ import { RegistrationState } from '@/services/agent';
 type AgentMode = 'registration' | 'health';
 
 export function useAgent(mode: AgentMode, cattle?: Cattle) {
+  const healthHistory = useRef<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
+
   const [messages, setMessages] = useState<Message[]>(() => {
     const welcomeContent =
       mode === 'registration'
@@ -27,6 +29,7 @@ export function useAgent(mode: AgentMode, cattle?: Cattle) {
     agentService.getInitialRegistrationState()
   );
   const [isRegistrationComplete, setIsRegistrationComplete] = useState(false);
+  const [cattleData, setCattleData] = useState<{ name: string; breed: string; age: number; weight: number; earTag: string } | null>(null);
 
   const sendMessage = useCallback(
     async (content: string) => {
@@ -49,9 +52,15 @@ export function useAgent(mode: AgentMode, cattle?: Cattle) {
           setRegistrationState(result.nextState);
           if (result.isComplete) {
             setIsRegistrationComplete(true);
+            if (result.cattleData) setCattleData(result.cattleData);
           }
         } else {
-          responseContent = await agentService.chatHealth(content, cattle);
+          responseContent = await agentService.chatHealth(content, cattle, healthHistory.current);
+          healthHistory.current = [
+            ...healthHistory.current,
+            { role: 'user' as const, content },
+            { role: 'assistant' as const, content: responseContent },
+          ].slice(-20);
         }
 
         const assistantMsg: Message = {
@@ -83,6 +92,8 @@ export function useAgent(mode: AgentMode, cattle?: Cattle) {
     ]);
     setRegistrationState(agentService.getInitialRegistrationState());
     setIsRegistrationComplete(false);
+    setCattleData(null);
+    healthHistory.current = [];
   }, [mode, cattle]);
 
   return {
@@ -92,5 +103,6 @@ export function useAgent(mode: AgentMode, cattle?: Cattle) {
     resetChat,
     registrationState,
     isRegistrationComplete,
+    cattleData,
   };
 }

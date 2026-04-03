@@ -17,4 +17,5 @@
   // Secrets (run: wrangler secret put <NAME>)
   // MSG91_AUTH_KEY
   // JWT_SECRET
+  // ANTHROPIC_API_KEY
 }

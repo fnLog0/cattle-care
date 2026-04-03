@@ -1,5 +1,26 @@
-// MOCK MODE — swap this import to real API client later
-import * as mock from '@/mock/vitals.mock';
+import { Vitals } from '@/types';
+import { apiRequest, getStoredToken } from './api-client';
 
-export const addVitals = mock.addVitals;
-export const getVitalsHistory = mock.getVitalsHistory;
+async function tok(): Promise<string | undefined> {
+  return (await getStoredToken()) ?? undefined;
+}
+
+export async function getVitalsHistory(cattleId: string): Promise<Vitals[]> {
+  return apiRequest<Vitals[]>(`/api/cattle/${cattleId}/vitals`, { token: await tok() });
+}
+
+export async function addVitals(
+  cattleId: string,
+  data: {
+    temperature: number;
+    respiratoryRate: number;
+    humidity: number;
+    heartRate: number;
+  },
+): Promise<Vitals> {
+  return apiRequest<Vitals>(`/api/cattle/${cattleId}/vitals`, {
+    method: 'POST',
+    token: await tok(),
+    body: JSON.stringify(data),
+  });
+}

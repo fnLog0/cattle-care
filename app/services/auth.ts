@@ -1,12 +1,3 @@
-// MOCK MODE — swap to real API when backend is ready
-import * as mock from '@/mock/auth.mock';
-export const sendOtp = mock.sendOtp;
-export const verifyOtp = mock.verifyOtp;
-export const googleLogin = mock.googleLogin;
-export const getMe = mock.getMe;
-export const updateProfile = mock.updateProfile;
-
-/* REAL API — uncomment when backend is running:
 import { User } from '@/types';
 import { apiRequest, getStoredToken } from './api-client';
 
@@ -57,9 +48,7 @@ export async function getMe(): Promise<User | null> {
   }
 }
 
-export async function updateProfile(
-  data: { fullName?: string; image?: string },
-): Promise<User> {
+export async function updateProfile(data: { fullName?: string; image?: string }): Promise<User> {
   const token = await getStoredToken();
   const raw = await apiRequest<Record<string, unknown>>('/api/auth/profile', {
     method: 'PUT',
@@ -68,4 +57,3 @@ export async function updateProfile(
   });
   return mapUser(raw);
 }
-*/

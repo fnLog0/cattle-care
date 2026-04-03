@@ -26,6 +26,18 @@ export type CattleRow = {
   updated_at: string;
 };
 
+export type VitalsRow = {
+  id: string;
+  cattle_id: string;
+  temperature: number;
+  respiratory_rate: number;
+  humidity: number;
+  heart_rate: number;
+  stress_index: number;
+  stress_level: 'none' | 'mild' | 'moderate' | 'severe' | 'danger';
+  recorded_at: string;
+};
+
 export type SessionRow = {
   id: string;
   user_id: string;
@@ -43,6 +55,7 @@ export type Bindings = {
   GOOGLE_CLIENT_ID: string;
   GOOGLE_CLIENT_SECRET: string;
   DEV_MODE: string;
+  ANTHROPIC_API_KEY: string;
 };
 
 export type AppEnv = {

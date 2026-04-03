@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-TABLES=(sessions users)
+TABLES=(vitals sessions cattle users)
 
 for TABLE in "${TABLES[@]}"; do
   echo "Dropping table: $TABLE"

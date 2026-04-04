@@ -8,7 +8,10 @@
     "cf-typegen": "wrangler types",
     "db:reset": "pnpm db:clean && pnpm db:import",
     "db:clean": "bash scripts/d1-clean-local.sh",
-    "db:import": "bash scripts/d1-import-local.sh"
+    "db:import": "bash scripts/d1-import-local.sh",
+    "db:reset:remote": "pnpm db:clean:remote && pnpm db:import:remote",
+    "db:clean:remote": "bash scripts/d1-clean-remote.sh",
+    "db:import:remote": "bash scripts/d1-import-remote.sh"
   },
   "dependencies": {
     "hono": "^4.6.0",

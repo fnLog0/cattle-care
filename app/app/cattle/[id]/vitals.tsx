@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
 import { VITAL_RANGES, STRESS_LABELS, STRESS_COLORS } from '@/constants/stress';
@@ -19,8 +20,14 @@ import { useDetailTab } from './_layout';
 export default function VitalsTab() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { cattle, isLoading } = useCattleDetail(id);
+  const { cattle, isLoading, refresh } = useCattleDetail(id);
   const { switchToAgent } = useDetailTab();
+
+  useFocusEffect(
+    React.useCallback(() => {
+      refresh();
+    }, [refresh]),
+  );
 
   if (isLoading) {
     return (

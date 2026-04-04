@@ -1,17 +1,19 @@
 {
   "expo": {
-    "name": "app",
-    "slug": "app",
+    "name": "CattleCare",
+    "slug": "cattle-care",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "app",
+    "scheme": "cattlecare",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.cattlecare.app"
     },
     "android": {
+      "package": "com.cattlecare.app",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

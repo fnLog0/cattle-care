@@ -12,7 +12,8 @@
   "vars": {
     "MSG91_SENDER_ID": "CATTLE",
     "MSG91_TEMPLATE_ID": "",
-    "GOOGLE_CLIENT_ID": ""
+    "GOOGLE_CLIENT_ID": "",
+    "DEV_MODE": "true"
   }
   // Secrets (run: wrangler secret put <NAME>)
   // MSG91_AUTH_KEY

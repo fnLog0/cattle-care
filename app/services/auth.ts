@@ -57,3 +57,9 @@ export async function updateProfile(data: { fullName?: string; image?: string })
   });
   return mapUser(raw);
 }
+
+export async function logout(): Promise<void> {
+  const token = await getStoredToken();
+  if (!token) return;
+  await apiRequest('/api/auth/logout', { method: 'POST', token });
+}

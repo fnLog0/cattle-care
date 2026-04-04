@@ -73,6 +73,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
+    // Invalidate session on backend (best-effort — don't block local logout)
+    try { await authService.logout(); } catch {}
     await Promise.all([
       AsyncStorage.removeItem(TOKEN_KEY),
       AsyncStorage.removeItem(USER_KEY),

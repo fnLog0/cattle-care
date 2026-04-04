@@ -7,6 +7,7 @@ import {
   googleAuthHandler,
   meHandler,
   updateProfileHandler,
+  logoutHandler,
 } from '../handlers/auth';
 
 export const authRouter = new Hono<AppEnv>();
@@ -20,3 +21,4 @@ authRouter.post('/google', googleAuthHandler);
 authRouter.use('/*', auth);
 authRouter.get('/me', meHandler);
 authRouter.put('/profile', updateProfileHandler);
+authRouter.post('/logout', logoutHandler);

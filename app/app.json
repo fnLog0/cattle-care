@@ -39,7 +39,13 @@
           }
         }
       ],
-      "expo-localization"
+      "expo-localization",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "CattleCare needs your location to fetch local temperature and humidity for accurate stress monitoring."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

@@ -5,25 +5,27 @@ export async function createVitals(
   id: string,
   cattleId: string,
   data: {
-    temperature: number;
+    bodyTemperature: number;
     respiratoryRate: number;
+    heartRate?: number | null;
+    ambientTemperature: number;
     humidity: number;
-    heartRate: number;
     stressIndex: number;
     stressLevel: VitalsRow['stress_level'];
   },
 ): Promise<VitalsRow | null> {
   await db
     .prepare(
-      'INSERT INTO vitals (id, cattle_id, temperature, respiratory_rate, humidity, heart_rate, stress_index, stress_level) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO vitals (id, cattle_id, body_temperature, respiratory_rate, heart_rate, ambient_temperature, humidity, stress_index, stress_level) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
     )
     .bind(
       id,
       cattleId,
-      data.temperature,
+      data.bodyTemperature,
       data.respiratoryRate,
+      data.heartRate ?? null,
+      data.ambientTemperature,
       data.humidity,
-      data.heartRate,
       data.stressIndex,
       data.stressLevel,
     )

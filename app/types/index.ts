@@ -14,10 +14,11 @@ export type StressLevel = 'none' | 'mild' | 'moderate' | 'severe' | 'danger';
 export type Vitals = {
   id: string;
   cattleId: string;
-  temperature: number;
+  bodyTemperature: number;
   respiratoryRate: number;
+  heartRate: number | null;
+  ambientTemperature: number;
   humidity: number;
-  heartRate: number;
   stressIndex: number;
   stressLevel: StressLevel;
   recordedAt: string;

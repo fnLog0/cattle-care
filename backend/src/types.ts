@@ -29,10 +29,11 @@ export type CattleRow = {
 export type VitalsRow = {
   id: string;
   cattle_id: string;
-  temperature: number;
+  body_temperature: number;
   respiratory_rate: number;
+  heart_rate: number | null;
+  ambient_temperature: number;
   humidity: number;
-  heart_rate: number;
   stress_index: number;
   stress_level: 'none' | 'mild' | 'moderate' | 'severe' | 'danger';
   recorded_at: string;

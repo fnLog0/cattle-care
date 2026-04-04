@@ -9,20 +9,21 @@ function calcStressIndex(temp: number, respRate: number, heartRate: number): num
 function makeVitals(
   id: string,
   cattleId: string,
-  temp: number,
+  bodyTemp: number,
   respRate: number,
   humidity: number,
   heartRate: number,
   recordedAt: string
 ): Vitals {
-  const stressIndex = calcStressIndex(temp, respRate, heartRate);
+  const stressIndex = calcStressIndex(bodyTemp, respRate, heartRate);
   return {
     id,
     cattleId,
-    temperature: temp,
+    bodyTemperature: bodyTemp,
     respiratoryRate: respRate,
-    humidity,
     heartRate,
+    ambientTemperature: 32,
+    humidity,
     stressIndex,
     stressLevel: getStressLevel(stressIndex),
     recordedAt,

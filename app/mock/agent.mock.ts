@@ -174,7 +174,7 @@ const HEALTH_RESPONSES: Array<{ keywords: string[]; response: (cattle?: Cattle) 
       }
       const v = cattle.latestVitals;
       const level = STRESS_LABELS[v.stressLevel];
-      return `Health Analysis for ${cattle.name}:\n\nStress Level: ${level} (Index: ${v.stressIndex.toFixed(1)}/100)\n\nKey indicators:\n• Temperature: ${v.temperature}°C ${v.temperature > 39.5 ? '⚠ Elevated' : '✓ Normal'}\n• Respiratory Rate: ${v.respiratoryRate}/min ${v.respiratoryRate > 25 ? '⚠ Elevated' : '✓ Normal'}\n• Heart Rate: ${v.heartRate} bpm ${v.heartRate > 80 ? '⚠ Elevated' : '✓ Normal'}\n• Humidity: ${v.humidity}%\n\n${v.stressLevel === 'none' || v.stressLevel === 'mild' ? `${cattle.name} appears healthy. Continue regular monitoring.` : `${cattle.name} requires attention. Consider immediate intervention.`}`;
+      return `Health Analysis for ${cattle.name}:\n\nStress Level: ${level} (Index: ${v.stressIndex.toFixed(1)}/100)\n\nKey indicators:\n• Body Temp: ${v.bodyTemperature}°C ${v.bodyTemperature > 39.5 ? '⚠ Elevated' : '✓ Normal'}\n• Respiratory Rate: ${v.respiratoryRate}/min ${v.respiratoryRate > 25 ? '⚠ Elevated' : '✓ Normal'}\n${v.heartRate != null ? `• Heart Rate: ${v.heartRate} bpm ${v.heartRate > 80 ? '⚠ Elevated' : '✓ Normal'}\n` : ''}• Humidity: ${v.humidity}%\n\n${v.stressLevel === 'none' || v.stressLevel === 'mild' ? `${cattle.name} appears healthy. Continue regular monitoring.` : `${cattle.name} requires attention. Consider immediate intervention.`}`;
     },
   },
   {
@@ -185,9 +185,9 @@ const HEALTH_RESPONSES: Array<{ keywords: string[]; response: (cattle?: Cattle) 
       }
       const v = cattle.latestVitals;
       const risks: string[] = [];
-      if (v.temperature > 40) risks.push('Fever — possible infection or heat stress');
+      if (v.bodyTemperature > 40) risks.push('Fever — possible infection or heat stress');
       if (v.respiratoryRate > 30) risks.push('High respiratory rate — monitor for respiratory illness');
-      if (v.heartRate > 85) risks.push('Elevated heart rate — potential cardiac stress');
+      if (v.heartRate != null && v.heartRate > 85) risks.push('Elevated heart rate — potential cardiac stress');
       if (v.humidity > 80) risks.push('High ambient humidity — increases heat stress risk');
 
       if (risks.length === 0) {
@@ -204,10 +204,10 @@ const HEALTH_RESPONSES: Array<{ keywords: string[]; response: (cattle?: Cattle) 
       }
       const v = cattle.latestVitals;
       const treatments: string[] = [];
-      if (v.temperature > 40) treatments.push('Provide cool water and shade immediately');
-      if (v.temperature > 41) treatments.push('Contact veterinarian for antipyretic medication');
+      if (v.bodyTemperature > 40) treatments.push('Provide cool water and shade immediately');
+      if (v.bodyTemperature > 41) treatments.push('Contact veterinarian for antipyretic medication');
       if (v.respiratoryRate > 30) treatments.push('Ensure good ventilation in shelter');
-      if (v.heartRate > 85) treatments.push('Reduce physical exertion, provide rest');
+      if (v.heartRate != null && v.heartRate > 85) treatments.push('Reduce physical exertion, provide rest');
       treatments.push('Maintain consistent feeding schedule');
       treatments.push('Ensure access to clean water at all times');
 
@@ -217,7 +217,7 @@ const HEALTH_RESPONSES: Array<{ keywords: string[]; response: (cattle?: Cattle) 
   {
     keywords: ['temperature', 'temp', 'fever', 'hot', 'heat'],
     response: (cattle) => {
-      const temp = cattle?.latestVitals?.temperature;
+      const temp = cattle?.latestVitals?.bodyTemperature;
       if (!temp) return 'No temperature data available. Please record vitals.';
       const normal = temp >= 38.0 && temp <= 39.5;
       return `Temperature Report for ${cattle?.name ?? 'your cattle'}:\n\nCurrent: ${temp}°C\nNormal Range: 38.0 – 39.5°C\nStatus: ${normal ? '✓ Normal' : '⚠ Abnormal'}\n\n${temp > 39.5 ? `Temperature is elevated by ${(temp - 39.5).toFixed(1)}°C. This may indicate fever, infection, or heat stress. Monitor closely and provide cool water and shade.` : temp < 38.0 ? 'Temperature is below normal. This could indicate shock or hypothermia. Contact a veterinarian.' : 'Temperature is within the healthy range. Continue regular monitoring.'}`;

@@ -3,10 +3,11 @@ import { z } from 'zod';
 export const VitalsRowSchema = z.object({
   id: z.string(),
   cattle_id: z.string(),
-  temperature: z.number(),
+  body_temperature: z.number(),
   respiratory_rate: z.number(),
+  heart_rate: z.number().nullable(),
+  ambient_temperature: z.number(),
   humidity: z.number(),
-  heart_rate: z.number(),
   stress_index: z.number(),
   stress_level: z.enum(['none', 'mild', 'moderate', 'severe', 'danger']),
   recorded_at: z.string(),

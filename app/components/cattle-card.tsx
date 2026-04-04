@@ -50,9 +50,9 @@ export function CattleCard({ cattle, onPress }: Props) {
 
         {vitals && (
           <View style={styles.vitalsRow}>
-            <VitalChip icon="thermometer-outline" value={`${vitals.temperature}°C`} />
+            <VitalChip icon="thermometer-outline" value={`${vitals.bodyTemperature}°C`} />
             <VitalChip icon="fitness-outline" value={`${vitals.respiratoryRate}/min`} />
-            <VitalChip icon="heart-outline" value={`${vitals.heartRate}bpm`} />
+            {vitals.heartRate != null && <VitalChip icon="heart-outline" value={`${vitals.heartRate}bpm`} />}
             <VitalChip icon="water-outline" value={`${vitals.humidity}%`} />
           </View>
         )}

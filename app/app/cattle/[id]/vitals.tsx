@@ -95,7 +95,7 @@ export default function VitalsTab() {
           <View style={styles.vitalsGrid}>
             <VitalCard
               label={VITAL_RANGES.temperature.label}
-              value={vitals.temperature}
+              value={vitals.bodyTemperature}
               unit={VITAL_RANGES.temperature.unit}
               icon="thermometer-outline"
               min={VITAL_RANGES.temperature.min}
@@ -111,15 +111,17 @@ export default function VitalsTab() {
               max={VITAL_RANGES.respiratoryRate.max}
               accentColor={Colors.info}
             />
-            <VitalCard
-              label={VITAL_RANGES.heartRate.label}
-              value={vitals.heartRate}
-              unit={VITAL_RANGES.heartRate.unit}
-              icon="heart-outline"
-              min={VITAL_RANGES.heartRate.min}
-              max={VITAL_RANGES.heartRate.max}
-              accentColor="#E11D48"
-            />
+            {vitals.heartRate != null && (
+              <VitalCard
+                label={VITAL_RANGES.heartRate.label}
+                value={vitals.heartRate}
+                unit={VITAL_RANGES.heartRate.unit}
+                icon="heart-outline"
+                min={VITAL_RANGES.heartRate.min}
+                max={VITAL_RANGES.heartRate.max}
+                accentColor="#E11D48"
+              />
+            )}
             <VitalCard
               label={VITAL_RANGES.humidity.label}
               value={vitals.humidity}

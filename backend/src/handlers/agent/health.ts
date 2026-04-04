@@ -49,9 +49,9 @@ Cattle you are monitoring:
 ${
   latestVitals
     ? `Latest Vitals (recorded ${latestVitals.recorded_at}):
-- Temperature: ${latestVitals.temperature}°C (normal: 38.0–39.5°C)
+- Body Temperature: ${latestVitals.body_temperature}°C (normal: 38.0–39.5°C)
 - Respiratory Rate: ${latestVitals.respiratory_rate}/min (normal: 15–30/min)
-- Heart Rate: ${latestVitals.heart_rate} bpm (normal: 40–80 bpm)
+${latestVitals.heart_rate != null ? `- Heart Rate: ${latestVitals.heart_rate} bpm (normal: 40–80 bpm)\n` : ''}- Ambient Temperature: ${latestVitals.ambient_temperature}°C
 - Humidity: ${latestVitals.humidity}%
 - Stress Index: ${latestVitals.stress_index.toFixed(1)}/100`
     : 'No vitals recorded yet for this cattle.'

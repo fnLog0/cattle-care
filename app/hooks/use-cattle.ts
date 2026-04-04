@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Cattle } from '@/types';
 import { StressLevel } from '@/types';
 import * as cattleService from '@/services/cattle';
+import { cacheGet, cacheSet } from '@/services/cache';
 import { useAuth } from './use-auth';
 
 const STRESS_ORDER: Record<StressLevel, number> = {
@@ -12,25 +13,35 @@ const STRESS_ORDER: Record<StressLevel, number> = {
   none: 4,
 };
 
+function sortByStress(data: Cattle[]): Cattle[] {
+  return [...data].sort(
+    (a, b) => (STRESS_ORDER[a.stressLevel] ?? 5) - (STRESS_ORDER[b.stressLevel] ?? 5),
+  );
+}
+
 export function useCattle() {
   const { user } = useAuth();
   const [cattle, setCattle] = useState<Cattle[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchCattle = useCallback(async () => {
     if (!user) return;
-    setIsLoading(true);
     setError(null);
+
+    // Show cached data immediately — no loading flicker
+    const cached = await cacheGet<Cattle[]>('cattle_list');
+    if (cached) {
+      setCattle(sortByStress(cached));
+      setIsLoading(false);
+    }
+
     try {
       const data = await cattleService.getAllCattle(user.id);
-      // Sort by stress severity: danger first
-      const sorted = [...data].sort(
-        (a, b) => (STRESS_ORDER[a.stressLevel] ?? 5) - (STRESS_ORDER[b.stressLevel] ?? 5)
-      );
-      setCattle(sorted);
-    } catch (e) {
-      setError('Failed to load cattle. Please try again.');
+      setCattle(sortByStress(data));
+      await cacheSet('cattle_list', data);
+    } catch {
+      if (!cached) setError('Failed to load cattle. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -43,10 +54,7 @@ export function useCattle() {
   const search = useCallback(
     async (query: string) => {
       if (!user) return;
-      if (!query.trim()) {
-        fetchCattle();
-        return;
-      }
+      if (!query.trim()) { fetchCattle(); return; }
       setIsLoading(true);
       try {
         const data = await cattleService.searchCattle(user.id, query);
@@ -57,33 +65,41 @@ export function useCattle() {
         setIsLoading(false);
       }
     },
-    [user, fetchCattle]
+    [user, fetchCattle],
   );
 
-  const deleteCattle = useCallback(
-    async (id: string) => {
-      await cattleService.deleteCattle(id);
-      setCattle((prev) => prev.filter((c) => c.id !== id));
-    },
-    []
-  );
+  const deleteCattle = useCallback(async (id: string) => {
+    await cattleService.deleteCattle(id);
+    setCattle((prev) => {
+      const updated = prev.filter((c) => c.id !== id);
+      cacheSet('cattle_list', updated);
+      return updated;
+    });
+  }, []);
 
   return { cattle, isLoading, error, refresh: fetchCattle, search, deleteCattle };
 }
 
 export function useCattleDetail(id: string) {
   const [cattle, setCattle] = useState<Cattle | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchCattle = useCallback(async () => {
-    setIsLoading(true);
     setError(null);
+
+    const cached = await cacheGet<Cattle>(`cattle_${id}`);
+    if (cached) {
+      setCattle(cached);
+      setIsLoading(false);
+    }
+
     try {
       const data = await cattleService.getCattle(id);
       setCattle(data);
+      if (data) await cacheSet(`cattle_${id}`, data);
     } catch {
-      setError('Failed to load cattle details.');
+      if (!cached) setError('Failed to load cattle details.');
     } finally {
       setIsLoading(false);
     }

@@ -5,9 +5,11 @@ import 'react-native-reanimated';
 import '@/i18n';
 
 import { AuthProvider } from '@/context/auth-context';
+import { NetworkProvider } from '@/context/network-context';
 import { useAuth } from '@/hooks/use-auth';
 import { Colors } from '@/constants/theme';
 import { loadSavedLanguage } from '@/i18n';
+import { OfflineBanner } from '@/components/offline-banner';
 
 function RootLayoutNav() {
   const { isLoggedIn, isLoading } = useAuth();
@@ -40,6 +42,7 @@ function RootLayoutNav() {
 
   return (
     <>
+      <OfflineBanner />
       <Stack
         screenOptions={{
           headerStyle: { backgroundColor: Colors.primary },
@@ -70,7 +73,9 @@ function RootLayoutNav() {
 export default function RootLayout() {
   return (
     <AuthProvider>
-      <RootLayoutNav />
+      <NetworkProvider>
+        <RootLayoutNav />
+      </NetworkProvider>
     </AuthProvider>
   );
 }

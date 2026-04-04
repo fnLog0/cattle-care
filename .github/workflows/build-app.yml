@@ -1,0 +1,74 @@
+name: Build App
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'app/**'
+      - '.github/workflows/build-app.yml'
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: Platform to build
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - android
+          - ios
+      profile:
+        description: Build profile
+        required: true
+        default: preview
+        type: choice
+        options:
+          - preview
+          - production
+
+jobs:
+  build:
+    name: EAS Build (${{ inputs.platform || 'all' }} / ${{ inputs.profile || 'preview' }})
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: TypeScript check
+        working-directory: app
+        run: npx tsc --noEmit
+
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Build
+        working-directory: app
+        run: |
+          eas build \
+            --platform ${{ inputs.platform || 'all' }} \
+            --profile ${{ inputs.profile || 'preview' }} \
+            --non-interactive
+        env:
+          EXPO_PUBLIC_API_URL: ${{ secrets.EXPO_PUBLIC_API_URL }}
+          EXPO_PUBLIC_GOOGLE_CLIENT_ID: ${{ secrets.EXPO_PUBLIC_GOOGLE_CLIENT_ID }}
+          EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: ${{ secrets.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID }}
+          EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID: ${{ secrets.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID }}

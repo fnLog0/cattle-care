@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
 import { VITAL_RANGES, STRESS_LABELS, STRESS_COLORS } from '@/constants/stress';
@@ -15,10 +15,10 @@ import { useCattleDetail } from '@/hooks/use-cattle';
 import { StressGauge } from '@/components/stress-gauge';
 import { VitalCard } from '@/components/vital-card';
 import { useDetailTab } from './_layout';
-// useDetailTab provides switchToAgent for navigation
 
 export default function VitalsTab() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
   const { cattle, isLoading } = useCattleDetail(id);
   const { switchToAgent } = useDetailTab();
 
@@ -34,6 +34,7 @@ export default function VitalsTab() {
   const stressColor = vitals ? STRESS_COLORS[vitals.stressLevel] : Colors.gray400;
 
   return (
+    <View style={styles.wrapper}>
     <ScrollView
       style={styles.container}
       contentContainerStyle={styles.content}
@@ -151,12 +152,42 @@ export default function VitalsTab() {
         <Ionicons name="chevron-forward" size={20} color={Colors.primary} />
       </TouchableOpacity>
     </ScrollView>
+
+    {/* Record Vitals FAB */}
+    <TouchableOpacity
+      style={styles.fab}
+      onPress={() => router.push(`/cattle/${id}/record-vitals` as any)}
+      activeOpacity={0.85}
+    >
+      <Ionicons name="add" size={22} color={Colors.white} />
+      <Text style={styles.fabText}>Record Vitals</Text>
+    </TouchableOpacity>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  wrapper: { flex: 1 },
   container: { flex: 1, backgroundColor: Colors.gray50 },
-  content: { padding: 16, gap: 16, paddingBottom: 40 },
+  content: { padding: 16, gap: 16, paddingBottom: 100 },
+  fab: {
+    position: 'absolute',
+    bottom: 24,
+    right: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    borderRadius: 18,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  fabText: { fontSize: 15, fontWeight: '700', color: Colors.white },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   gaugeCard: {
     backgroundColor: Colors.white,

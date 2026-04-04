@@ -19,6 +19,17 @@ export type RegistrationState = {
 };
 
 type AgentHealthResponse = { reply: string };
+type AgentVitalsResponse = {
+  reply: string;
+  isComplete: boolean;
+  vitalsData: {
+    bodyTemperature: number;
+    respiratoryRate: number;
+    heartRate: number | null;
+    ambientTemperature: number;
+    humidity: number;
+  } | null;
+};
 type AgentRegisterResponse = {
   reply: string;
   isComplete: boolean;
@@ -51,6 +62,36 @@ export async function chatHealth(
     body: JSON.stringify({ cattleId: cattle.id, message, history }),
   });
   return res.reply;
+}
+
+export type VitalsHistory = Array<{ role: 'user' | 'assistant'; content: string }>;
+
+export function getVitalsWelcome(
+  cattleName: string,
+  ambientTemperature: number,
+  humidity: number,
+  location?: string,
+): string {
+  return `Hi! I'll help record vitals for ${cattleName}.\n\n📍 Auto-fetched from${location ? ` ${location}` : ' your location'}:\n• Ambient Temp: ${ambientTemperature}°C\n• Humidity: ${humidity}%\n\nLet's start — what is ${cattleName}'s current body temperature? (°C)`;
+}
+
+export async function chatVitals(
+  cattleId: string,
+  message: string,
+  history: VitalsHistory,
+  environmental: { ambientTemperature: number; humidity: number; location?: string },
+): Promise<{ response: string; isComplete: boolean; vitalsData: AgentVitalsResponse['vitalsData'] }> {
+  const res = await apiRequest<AgentVitalsResponse>('/api/agent/vitals', {
+    method: 'POST',
+    token: await tok(),
+    body: JSON.stringify({ cattleId, message, history, environmental }),
+  });
+
+  return {
+    response: res.reply,
+    isComplete: res.isComplete,
+    vitalsData: res.vitalsData,
+  };
 }
 
 export async function chatRegistration(

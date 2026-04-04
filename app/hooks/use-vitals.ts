@@ -27,16 +27,17 @@ export function useVitals(cattleId: string) {
 
   const addVitals = useCallback(
     async (data: {
-      temperature: number;
+      bodyTemperature: number;
       respiratoryRate: number;
+      heartRate?: number | null;
+      ambientTemperature: number;
       humidity: number;
-      heartRate: number;
     }) => {
       const newVitals = await vitalsService.addVitals(cattleId, data);
       setVitals((prev) => [newVitals, ...prev].slice(0, 10));
       return newVitals;
     },
-    [cattleId]
+    [cattleId],
   );
 
   return { vitals, isLoading, error, refresh: fetchVitals, addVitals };

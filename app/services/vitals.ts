@@ -12,10 +12,11 @@ export async function getVitalsHistory(cattleId: string): Promise<Vitals[]> {
 export async function addVitals(
   cattleId: string,
   data: {
-    temperature: number;
+    bodyTemperature: number;
     respiratoryRate: number;
+    heartRate?: number | null;
+    ambientTemperature: number;
     humidity: number;
-    heartRate: number;
   },
 ): Promise<Vitals> {
   return apiRequest<Vitals>(`/api/cattle/${cattleId}/vitals`, {

@@ -40,8 +40,8 @@ First screen on app launch. Simple branding + two clear actions.
 - **App Name**: H1, centered, Dark Green `#166534`
 - **Tagline**: Body, centered, Medium Gray `#78716C`
 - **Buttons**: Full width with 16px horizontal padding
-  - Sign In → navigates to Login screen
-  - Create Account → navigates to Register screen
+  - Sign In → navigates to Login screen (phone OTP / Google)
+  - Create Account → also navigates to Login screen (registration is automatic on first OTP verification — no separate signup form)
 - **Bottom padding**: 32px from bottom safe area
 
 ## States

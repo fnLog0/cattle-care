@@ -1,130 +1,193 @@
-# Module: Vitals & Stress Calculation
+# Module: Stress (Individual + Environmental)
 
 ## Overview
-Records animal vitals (temperature, respiratory rate, humidity, heart rate) and calculates a stress level using a threshold-based engine. Data stored in Cloudflare D1.
+Two separate stress signals power the dashboard:
 
-## D1 Database Schema
+1. **Individual cattle stress** (Strain Index) — derived from rectal temperature + respiration rate, breed-normalized.
+2. **Environmental stress** (THI — Temperature-Humidity Index) — derived from current weather at the user's location via Open-Meteo.
 
-```sql
-CREATE TABLE vitals (
-  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
-  cattle_id TEXT NOT NULL REFERENCES cattle(id) ON DELETE CASCADE,
-  temperature REAL NOT NULL,
-  respiratory_rate REAL NOT NULL,
-  humidity REAL NOT NULL,
-  heart_rate REAL NOT NULL,
-  stress_index INTEGER NOT NULL,
-  stress_level TEXT NOT NULL CHECK (stress_level IN ('none', 'mild', 'moderate', 'severe', 'danger')),
-  recorded_at TEXT DEFAULT (datetime('now'))
-);
+Both produce the same 5-level classification (`none | mild | moderate | severe | danger`).
 
-CREATE INDEX idx_vitals_cattle_id ON vitals(cattle_id);
-CREATE INDEX idx_vitals_recorded_at ON vitals(recorded_at);
+> **Persistence**: Each individual stress calculation appends a row to the `vitals` table (full history) **and** updates the latest `cattle.stress_level`. Environmental THI is computed on-demand and not persisted.
+
+---
+
+## Individual Cattle Stress (Strain Index)
+
+### Formula
+```
+SI = 5 × [ (Tobs − Tmin) / (Tmax − Tmin)
+        + (Robs − Rmin) / (Rmax − Rmin) ]
+
+Where:
+  Tobs = observed rectal temperature (°C)
+  Robs = observed respiration rate (breaths/min)
+  Tmin/Tmax, Rmin/Rmax = breed-specific normal ranges
 ```
 
-## Vital Inputs
+### Breed Constants
+| Breed       | Tmin | Tmax | Rmin | Rmax |
+|-------------|------|------|------|------|
+| zebu        | 36.5 | 40.0 | 10   | 120  |
+| crossBreed  | 37.0 | 42.0 | 10   | 150  |
+| murrah      | 37.0 | 42.0 | 10   | 150  |
 
-| Vital | Unit | Normal Range | Warning | Critical |
-|-------|------|-------------|---------|----------|
-| Temperature | °C | ≤ 37 | > 37 | > 40 |
-| Respiratory Rate | breaths/min | ≤ 40 | > 40 | > 80 |
-| Humidity | % | ≤ 70 | > 70 | > 85 |
-| Heart Rate | bpm | ≤ 80 | > 80 | > 100 |
+### Classification
+| Strain Index | Level    |
+|--------------|----------|
+| SI < 2       | none     |
+| 2 ≤ SI < 4   | mild     |
+| 4 ≤ SI < 6   | moderate |
+| 6 ≤ SI < 8   | severe   |
+| SI ≥ 8       | danger   |
 
-## Stress Level Calculation
+Implemented in `backend/src/services/cattle-stress.ts`.
 
-### Step 1: Score Each Vital (0–2)
+---
+
+## Environmental Stress (THI)
+
+### Formula
 ```
-For each vital:
-  0 = Normal (within normal range)
-  1 = Warning (above warning threshold)
-  2 = Critical (above critical threshold)
-```
+THI = (1.8 · T + 32) − (0.55 − 0.0055 · RH) · (1.8 · T − 26)
 
-### Step 2: Calculate Total Score
+Where:
+  T  = dry-bulb temperature (°C)
+  RH = relative humidity (%)
 ```
-totalScore = tempScore + respScore + humidityScore + heartRateScore
-Range: 0 to 8
-```
+(NRC 1971 formulation.)
 
-### Step 3: Map to Stress Level
+### Classification
+| THI            | Level    |
+|----------------|----------|
+| THI < 72       | none     |
+| 72 ≤ THI < 79  | mild     |
+| 79 ≤ THI < 89  | moderate |
+| 89 ≤ THI < 99  | severe   |
+| THI ≥ 99       | danger   |
 
-| Total Score | Stress Level | Color | Badge |
-|-------------|-------------|-------|-------|
-| 0 | No Stress | Green (#22C55E) | ✅ |
-| 1–2 | Mild Stress | Amber (#F59E0B) | 🟡 |
-| 3–4 | Moderate Stress | Orange (#F97316) | 🟠 |
-| 5–6 | Severe Stress | Red (#EF4444) | 🔴 |
-| 7–8 | Danger Zone | Dark Red (#991B1B) | ⛔ |
+### Weather Source
+- **API**: `https://api.open-meteo.com/v1/forecast?current=temperature_2m,relative_humidity_2m`
+- **No auth key required**
+- **Cached**: 10 minutes via Cloudflare Workers Cache API; cache key is the request URL with lat/lon rounded to 2 decimals (~1.1 km buckets).
+
+Implemented in `backend/src/services/thi.ts`.
+
+---
 
 ## REST API Endpoints
 
-### Mutations
-| Method | Path | Input (JSON Body) | Output | Auth |
-|--------|------|-------------------|--------|------|
-| `POST` | `/api/cattle/:id/vitals` | `{ temperature, respiratoryRate, humidity, heartRate }` | `Cattle` (updated) | ✅ Yes |
+All endpoints require `Authorization: Bearer <token>`.
 
-### Queries
-| Method | Path | Input | Output | Auth |
-|--------|------|-------|--------|------|
-| `GET` | `/api/cattle/:id/vitals` | query: `?range=7d\|30d\|90d` | `[Vitals]` | ✅ Yes |
+| Method | Path | Input | Output |
+|--------|------|-------|--------|
+| `PATCH` | `/api/stress/cattle/:id` | JSON body `{ rectalTemperature, respirationRate }` | `{ cattleId, cattleName, breed, strainIndex, stressLevel, temperatureComponent, respirationComponent, timestamp }` |
+| `GET`   | `/api/stress/cattle/:id/history` | Query `?range=7d\|30d\|90d` (default `30d`) | `{ cattleId, range, count, readings: [{ id, rectalTemperature, respirationRate, strainIndex, stressLevel, recordedAt }] }` |
+| `GET`   | `/api/stress/environmental` | Query `?latitude=&longitude=` | `{ thi, stressLevel, temperature, humidity, latitude, longitude, timestamp }` |
 
-## Flow
+### Validation
+- `rectalTemperature`: 30–45 °C
+- `respirationRate`: 1–200 breaths/min
+- `latitude`: −90 to 90
+- `longitude`: −180 to 180
 
-### Record Vitals Flow
+### Error Cases
+| Status | When |
+|--------|------|
+| 400    | Validation failed (bad numbers, missing field) |
+| 401    | Missing or invalid bearer token |
+| 404    | Cattle not found for this user (individual endpoint) |
+| 502    | Weather API failure (environmental endpoint) |
+
+---
+
+## Individual Stress Flow
+
 ```
-1. POST /api/cattle/:id/vitals with { temperature, respiratoryRate, humidity, heartRate }
-2. Worker calculates stress score + level
-3. INSERT into vitals table
-4. UPDATE cattle SET stress_level = ? WHERE id = ?
-5. Return updated cattle with new vitals
-```
-
-### Worker Logic (Pseudocode)
-```javascript
-function calculateStress(vitals) {
-  let score = 0;
-
-  // Temperature
-  if (vitals.temperature > 40) score += 2;
-  else if (vitals.temperature > 37) score += 1;
-
-  // Respiratory Rate
-  if (vitals.respiratoryRate > 80) score += 2;
-  else if (vitals.respiratoryRate > 40) score += 1;
-
-  // Humidity
-  if (vitals.humidity > 85) score += 2;
-  else if (vitals.humidity > 70) score += 1;
-
-  // Heart Rate
-  if (vitals.heartRate > 100) score += 2;
-  else if (vitals.heartRate > 80) score += 1;
-
-  const levels = ['none', 'mild', 'mild', 'moderate', 'moderate',
-                  'severe', 'severe', 'danger', 'danger'];
-  return { score, level: levels[score] };
-}
+1. User taps "Update vitals" on cattle detail
+2. App PATCH /api/stress/cattle/:id with { rectalTemperature, respirationRate }
+3. Worker:
+   a. Auth middleware loads session + user
+   b. SELECT cattle WHERE id = ? AND user_id = ?  (404 if not found)
+   c. Validate body (Zod)
+   d. Compute Strain Index via breed constants
+   e. In parallel:
+      - UPDATE cattle SET stress_level = ?, updated_at = now()
+        WHERE id = ? AND user_id = ?
+      - INSERT into vitals (history row)
+4. Worker returns the computed result (strainIndex, components, timestamp)
+5. App updates UI immediately
 ```
 
-### SQL: Insert Vitals + Update Cattle (D1 Batch)
-```javascript
-// Use D1 batch for atomic operations
-await env.DB.batch([
-  env.DB.prepare(
-    `INSERT INTO vitals (id, cattle_id, temperature, respiratory_rate, humidity, heart_rate, stress_index, stress_level)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-  ).bind(id, cattleId, temp, resp, humidity, hr, score, level),
+> **Defense-in-depth**: the cattle `UPDATE` is scoped by both `id` and `user_id` even though ownership was already checked in step 3b.
 
-  env.DB.prepare(
-    `UPDATE cattle SET stress_level = ?, updated_at = datetime('now') WHERE id = ?`
-  ).bind(level, cattleId),
-]);
+## Vitals History Flow
+
+```
+1. App GET /api/stress/cattle/:id/history?range=7d
+2. Worker:
+   a. Auth middleware
+   b. SELECT cattle WHERE id = ? AND user_id = ?  (404 if not found)
+   c. Validate range (Zod, default 30d)
+   d. SELECT * FROM vitals
+      WHERE cattle_id = ?
+        AND recorded_at >= datetime('now', '-N days')
+      ORDER BY recorded_at ASC
+3. Return readings (oldest first — chart-friendly)
 ```
 
-## Migration Notes (from old backend)
-- **Old formula**: Breed-specific normalized strain index (MongoDB embedded docs)
-- **New formula**: Universal threshold-based scoring with 4 vitals
-- **Old storage**: Embedded array in cattle document → **New**: Separate `vitals` table in D1
-- **Old levels**: 3 with overlapping ranges → **New**: 5 with clean boundaries
-- **D1 batch**: Used for atomic vitals insert + cattle stress update
+## Vitals D1 Schema
+
+```sql
+CREATE TABLE IF NOT EXISTS vitals (
+  id TEXT PRIMARY KEY,
+  cattle_id TEXT NOT NULL REFERENCES cattle(id) ON DELETE CASCADE,
+  rectal_temperature REAL NOT NULL,
+  respiration_rate REAL NOT NULL,
+  strain_index REAL NOT NULL,
+  stress_level TEXT NOT NULL CHECK (stress_level IN ('none','mild','moderate','severe','danger')),
+  recorded_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_vitals_cattle_recorded
+  ON vitals(cattle_id, recorded_at);
+```
+
+---
+
+## Environmental Stress Flow
+
+```
+1. App acquires device location (expo-location)
+2. App GET /api/stress/environmental?latitude=…&longitude=…
+3. Worker:
+   a. Auth middleware
+   b. Validate lat/lon (Zod)
+   c. Round lat/lon to 2 decimals (cache bucketing)
+   d. Cache.match(request) → if hit, reuse upstream response
+   e. Else fetch Open-Meteo, set `Cache-Control: public, s-maxage=600`, cache.put
+   f. Compute THI + classification
+4. Return JSON to app
+```
+
+---
+
+## Source Code Map
+| Layer | File |
+|-------|------|
+| Routes | `backend/src/endpoints/stress.ts` |
+| Handlers | `backend/src/handlers/stress/cattleStress.ts`, `history.ts`, `environmentalStress.ts` |
+| Services | `backend/src/services/cattle-stress.ts`, `thi.ts` |
+| Cattle mutation | `backend/src/db/cattle/mutations.ts` → `updateCattleStressLevel(db, id, userId, level)` |
+| Vitals history | `backend/src/db/vitals/` → `insertVitals(...)`, `getVitalsHistory(db, cattleId, range)` |
+
+---
+
+## Not Yet Implemented (planned)
+
+| Item | Notes |
+|------|-------|
+| Trend charts in the app | History endpoint exists; the frontend still needs a chart library + UI on cattle detail + reports. |
+| Heart rate + humidity inputs | The earlier 4-vital design (temp + resp + humidity + heart rate) was de-scoped; current SI uses only temp + resp. Add back if/when sensors are available. |
+| Push alerts on danger | Notify the user when stress crosses `severe`/`danger`. |
+| Auto-recalc on environment change | Cron or queue that re-runs stress for all cattle when THI moves into a higher band. See `flow/10-autonomous-monitoring.md`. |

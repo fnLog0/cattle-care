@@ -1,7 +1,7 @@
 # CattleCare AI — System Overview
 
 ## App Summary
-CattleCare AI is a livestock health monitoring app that uses AI agents (Claude) to help farmers register cattle conversationally and get real-time health analysis based on vitals.
+CattleCare AI is a livestock health monitoring app. Farmers register cattle via a simple form, then use an AI Health Agent (Claude) for real-time health analysis based on vitals.
 
 ## Architecture
 
@@ -52,7 +52,7 @@ User Opens App
   → Onboarding (first time)
   → Auth (login/register)
   → Cattle List (home)
-    → Create Cattle (AI agent chat)
+    → Create Cattle (form)
     → Cattle Detail
       → Vitals Tab (stress gauge)
       → AI Agent Tab (health chat)

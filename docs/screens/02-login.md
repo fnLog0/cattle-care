@@ -1,68 +1,56 @@
 # Screen: Login
 
 ## Purpose
-Sign in with email/password or Google. Clean, minimal form.
+Sign in with **phone + OTP** (primary) or **Google** (one-tap). No email/password — see `flow/01-auth.md` for the rationale.
 
 ## Layout
 
 ```
 ┌─────────────────────────────────────┐
-│  ←                                  │  Back arrow (top-left)
+│  ←                                  │  Back arrow → Onboarding
 │                                     │
 │  Welcome back 👋                    │  H1, Dark Green
 │  Sign in to your account            │  Body, Medium Gray
 │                                     │
+│  Mobile number                      │  Label
+│  ┌───────┬─────────────────────┐    │
+│  │ 🇮🇳+91 │ 98765 43210         │    │  Country prefix + 10-digit input
+│  └───────┴─────────────────────┘    │  Numeric keypad auto-opens
 │                                     │
 │  ┌─────────────────────────────┐    │
-│  │  🔵 Continue with Google    │    │  Google button (white bg,
-│  └─────────────────────────────┘    │  border, Google icon)
+│  │          Send OTP           │    │  Primary green button
+│  └─────────────────────────────┘    │  Disabled until 10 digits entered
 │                                     │
-│  ──────── or ────────               │  Divider with "or"
+│  ──────── or ────────               │  Divider
 │                                     │
-│  Email                              │  Label
 │  ┌─────────────────────────────┐    │
-│  │ you@email.com               │    │  Input field
+│  │  🔵 Continue with Google    │    │  expo-auth-session/google
 │  └─────────────────────────────┘    │
-│                                     │
-│  Password                           │  Label
-│  ┌─────────────────────────────┐    │
-│  │ ••••••••            👁      │    │  Input + toggle visibility
-│  └─────────────────────────────┘    │
-│                                     │
-│              Forgot password?       │  Right-aligned link, Green
-│                                     │
-│  ┌─────────────────────────────┐    │
-│  │          Sign In            │    │  Primary Button
-│  └─────────────────────────────┘    │
-│                                     │
-│   Don't have an account? Sign up    │  Centered, "Sign up" in Green
 │                                     │
 └─────────────────────────────────────┘
 ```
 
 ## Specs
-- **Back arrow**: Top-left, goes to Onboarding
-- **Title**: Left-aligned, H1
-- **Google Button**: Full width, white bg, 1px gray border, Google "G" icon
-- **Divider**: Horizontal line with "or" text centered
-- **Input fields**: 52px height, 16px font, 12px radius
-- **Password field**: Eye icon to toggle show/hide
-- **Forgot password**: Right-aligned, Green text (UI only for now)
-- **Sign In button**: Full width, Green, disabled until both fields filled
-- **Bottom link**: "Sign up" text is tappable → Register screen
+- **Phone input**: 10 digits only, `keyboardType="number-pad"`, validated against `/^[6-9]\d{9}$/`
+- **Country code**: Fixed `+91` (India). No picker yet.
+- **Send OTP button**: 52px height, green, disabled until valid number
+- **Google button**: white bg, 1px gray border, full width
+- **No "Sign up" link**: registration is automatic on first OTP verification
+
+## Behaviour
+| Action | Effect |
+|--------|--------|
+| Send OTP | `POST /api/auth/send-otp` → on success navigate to `/otp?phone={phone}` |
+| Continue with Google | Google SDK returns idToken → `POST /api/auth/google` → if `isNewUser` navigate to `/onboard-name`, else `/(tabs)` |
 
 ## Validation
-- Email: basic format check (show inline error below field)
-- Password: minimum 4 characters
-- Error: red text below field, `14px`
+- Phone must start with 6, 7, 8, or 9 and have exactly 10 digits
+- Inline red text below field on invalid format
 
-## Loading State
-```
-┌─────────────────────────────────┐
-│     Signing in...   ⟳          │  Button shows spinner
-└─────────────────────────────────┘
-```
+## Loading / Error States
+- **Send OTP loading**: spinner inside button, button disabled
+- **API error**: alert with the server message (or "Failed to send OTP")
+- **Network error**: alert "Something went wrong, please try again"
 
-## Error State
-- API error → show toast/banner at top: "Invalid email or password"
-- Red bg `#FEF2F2`, red text `#EF4444`, dismiss after 4s
+## Dev Mode
+When backend `DEV_MODE=true`, `send-otp` returns `{ requestId: 'dev-request-id' }` without calling MSG91. The OTP screen accepts `1234` as a valid code.

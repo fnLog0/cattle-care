@@ -28,7 +28,7 @@ app/
 │   ├── cattle.ts                ← getAllCattle(), getCattle(), addCattle(), etc.
 │   ├── vitals.ts                ← addVitals(), getVitalsHistory()
 │   ├── reports.ts               ← getHerdSummary(), getAtRiskCattle()
-│   └── agent.ts                 ← chatRegistration(), chatHealth()
+│   └── agent.ts                 ← chatHealth()
 │
 ├── mock/                        ← MOCK DATA + FAKE LOGIC (delete later)
 │   ├── data.ts                  ← All mock cattle, users, vitals
@@ -68,7 +68,6 @@ app/
 │   ├── chat-bubble.tsx          ← Agent/user message bubble
 │   ├── chat-input.tsx           ← Message input bar
 │   ├── quick-chips.tsx          ← Quick prompt pills
-│   ├── summary-card.tsx         ← Registration confirmation card
 │   ├── menu-row.tsx             ← Settings menu item
 │   └── empty-state.tsx          ← Reusable empty state
 │
@@ -83,7 +82,7 @@ app/
 │   │   ├── reports.tsx          ← NEW (replace explore.tsx)
 │   │   └── settings.tsx         ← NEW
 │   └── cattle/
-│       ├── create.tsx           ← NEW: AI Registration chat
+│       ├── create.tsx           ← NEW: Add Cattle form
 │       └── [id]/
 │           ├── _layout.tsx      ← NEW: Top tab layout
 │           ├── vitals.tsx       ← NEW: Vitals tab
@@ -179,7 +178,7 @@ Create: mock/agent.mock.ts
 ```
 - Each function adds `await delay(500)` to simulate network
 - Cattle mock: stores in-memory array, supports add/update/delete/search
-- Auth mock: accepts any email/password, returns mock user + fake JWT
+- Auth mock: accepts any 10-digit phone, OTP `1234` returns mock user + fake JWT
 - Agent mock: returns canned responses based on keywords
 - Vitals mock: calculates real stress index using the formula
 
@@ -225,40 +224,57 @@ Create: hooks/use-auth.ts
 ---
 
 ### Phase 2: Auth Screens
-> Onboarding, Login, Register + auth guard in root layout
+> Language picker, Onboarding, Login, OTP, Name capture + auth guard in root layout
 
-**Step 2.1 — Onboarding Screen**
+**Step 2.1 — Select Language**
+```
+Create: app/select-language.tsx
+```
+- Logo hero + radio list (English / Hindi)
+- Continue → `changeLanguage()` → `/onboarding`
+- Shown only on first launch (before any language is saved)
+
+**Step 2.2 — Onboarding Screen**
 ```
 Create: app/onboarding.tsx
 ```
 - Logo + tagline + 2 buttons (Sign In / Create Account)
-- If already logged in → redirect to (tabs)
+- Both buttons go to `/login` — there is no separate signup
+- If already logged in → redirect to `(tabs)`
 
-**Step 2.2 — Login Screen**
+**Step 2.3 — Login Screen**
 ```
 Create: app/login.tsx
 ```
-- Google button (UI only in mock — shows toast "Google login coming soon")
-- Email + Password fields
-- Calls `services/auth.login()`
-- On success → `router.replace('/(tabs)')`
+- Phone input (+91 prefix, 10-digit number-pad)
+- "Send OTP" → `services/auth.sendOtp()` → `/otp?phone=…`
+- "Continue with Google" → `services/auth.googleLogin()` (expo-auth-session)
+- No email/password
 
-**Step 2.3 — Register Screen**
+**Step 2.4 — OTP Screen**
 ```
-Create: app/register.tsx
+Create: app/otp.tsx
 ```
-- Full Name, Email, Password, Confirm Password
-- Client-side validation
-- Calls `services/auth.register()`
-- On success → `router.replace('/(tabs)')`
+- 4-digit OTP boxes, auto-focus, auto-verify when all filled
+- 30-second resend cooldown
+- `services/auth.verifyOtp()`:
+  - `isNewUser=true` → `/onboard-name`
+  - `isNewUser=false` → `/(tabs)`
 
-**Step 2.4 — Root Layout Update**
+**Step 2.5 — Onboard Name**
+```
+Create: app/onboard-name.tsx
+```
+- Single full-name input
+- `services/auth.updateProfile({ fullName })` → `/(tabs)`
+
+**Step 2.6 — Root Layout Update**
 ```
 Update: app/_layout.tsx
 ```
-- Wrap with `<AuthProvider>`
-- Auth guard: if no token → redirect to `/onboarding`
-- Add stack screens for onboarding, login, register
+- Wrap with `<AuthProvider>` + i18n bootstrap
+- Auth guard: if no token → redirect to `/onboarding` (or `/select-language` if no lang saved)
+- Stack screens for select-language, onboarding, login, otp, onboard-name
 
 ---
 
@@ -295,26 +311,20 @@ Update: app/(tabs)/_layout.tsx
 
 ---
 
-### Phase 4: Create Cattle (AI Chat)
-> Conversational registration with mock AI
+### Phase 4: Create Cattle (Form)
+> Simple form-based registration — 5 fixed fields, no AI
 
-**Step 4.1 — Components**
-```
-Create: components/chat-bubble.tsx
-Create: components/chat-input.tsx
-Create: components/quick-chips.tsx
-Create: components/summary-card.tsx
-```
-
-**Step 4.2 — Create Cattle Screen**
+**Step 4.1 — Create Cattle Screen**
 ```
 Create: app/cattle/create.tsx
 ```
-- Chat UI with message list + input bar
-- Mock agent asks for name → breed (with chips) → age → weight → ear tag
-- Shows summary card when complete
-- Confirm → `services/cattle.addCattle()` → navigate back
-- Agent mock logic: state machine tracking which fields are collected
+- Form fields: name, breed (dropdown: zebu/crossBreed/murrah), age, weight, ear tag
+- Optional photo picker (camera / gallery via expo-image-picker)
+- Client-side validation (all required except photo)
+- Submit → `services/cattle.addCattle()` → toast + navigate back to list
+
+> Note: Chat components (chat-bubble, chat-input, quick-chips) are built in **Phase 5**
+> for the AI Health Agent tab, not here.
 
 ---
 
@@ -496,11 +506,13 @@ Phase 1: Foundation
 
 Phase 2: Auth Screens
   □ app/_layout.tsx (update)
+  □ app/select-language.tsx
   □ app/onboarding.tsx
   □ app/login.tsx
-  □ app/register.tsx
-  □ Verify: can register → lands on tabs
-  □ Verify: can login → lands on tabs
+  □ app/otp.tsx
+  □ app/onboard-name.tsx
+  □ Verify: send OTP → enter 1234 → lands on tabs (or name input for new user)
+  □ Verify: Google login → lands on tabs
   □ Verify: logout → goes to onboarding
 
 Phase 3: Cattle List
@@ -514,17 +526,16 @@ Phase 3: Cattle List
   □ Verify: search works
   □ Verify: FAB navigates to create
 
-Phase 4: Create Cattle Chat
-  □ components/chat-bubble.tsx
-  □ components/chat-input.tsx
-  □ components/quick-chips.tsx
-  □ components/summary-card.tsx
+Phase 4: Create Cattle (Form)
   □ app/cattle/create.tsx
-  □ Verify: full chat flow → confirm → cattle appears in list
+  □ Verify: form submits → cattle appears in list
 
 Phase 5: Cattle Detail
   □ components/stress-gauge.tsx
   □ components/vital-card.tsx
+  □ components/chat-bubble.tsx
+  □ components/chat-input.tsx
+  □ components/quick-chips.tsx
   □ app/cattle/[id]/_layout.tsx
   □ app/cattle/[id]/vitals.tsx
   □ app/cattle/[id]/agent.tsx

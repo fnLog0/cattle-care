@@ -51,7 +51,7 @@ CREATE INDEX idx_cattle_name ON cattle(name);
    - Name, breed, ear tag
    - Latest temperature + respiratory rate
    - Color-coded stress badge
-5. + FAB button → Create Cattle (AI Agent)
+5. + FAB button → Create Cattle (Form)
 6. Tap card → Cattle Detail screen
 ```
 

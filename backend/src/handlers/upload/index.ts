@@ -1,0 +1,1 @@
+export { uploadCattleImageHandler } from './cattleImage';

@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS cattle (
   age REAL NOT NULL,
   weight REAL NOT NULL,
   ear_tag TEXT NOT NULL UNIQUE,
+  image_url TEXT,
   stress_level TEXT NOT NULL DEFAULT 'none' CHECK (stress_level IN ('none', 'mild', 'moderate', 'severe', 'danger')),
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))

@@ -10,6 +10,7 @@ const CreateCattleSchema = z.object({
   age: z.number().min(0).max(30),
   weight: z.number().min(50).max(1000),
   earTag: z.string().min(1).max(50),
+  imageUrl: z.string().url().optional(),
 });
 
 export async function createCattleHandler(c: AppContext) {
@@ -22,13 +23,20 @@ export async function createCattleHandler(c: AppContext) {
     return error(c, parsed.error.errors[0]?.message ?? 'Invalid input', 400);
   }
 
-  const { name, breed, age, weight, earTag } = parsed.data;
+  const { name, breed, age, weight, earTag, imageUrl } = parsed.data;
 
   const existing = await getCattleByEarTag(db, earTag);
   if (existing) return error(c, 'Ear tag already registered', 400);
 
   const id = crypto.randomUUID().replace(/-/g, '');
-  const row = await createCattle(db, id, user.id, { name, breed, age, weight, earTag });
+  const row = await createCattle(db, id, user.id, {
+    name,
+    breed,
+    age,
+    weight,
+    earTag,
+    imageUrl,
+  });
   if (!row) return error(c, 'Failed to create cattle', 500);
 
   return success(
@@ -40,6 +48,7 @@ export async function createCattleHandler(c: AppContext) {
       age: row.age,
       weight: row.weight,
       earTag: row.ear_tag,
+      imageUrl: row.image_url,
       stressLevel: row.stress_level,
       userId: row.user_id,
       createdAt: row.created_at,

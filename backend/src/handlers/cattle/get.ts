@@ -18,6 +18,7 @@ export async function getCattle(c: AppContext) {
     age: row.age,
     weight: row.weight,
     earTag: row.ear_tag,
+    imageUrl: row.image_url,
     stressLevel: row.stress_level,
     userId: row.user_id,
     createdAt: row.created_at,

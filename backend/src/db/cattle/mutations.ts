@@ -10,13 +10,23 @@ export async function createCattle(
     age: number;
     weight: number;
     earTag: string;
+    imageUrl?: string;
   },
 ): Promise<CattleRow | null> {
   await db
     .prepare(
-      'INSERT INTO cattle (id, user_id, name, breed, age, weight, ear_tag) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO cattle (id, user_id, name, breed, age, weight, ear_tag, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
     )
-    .bind(id, userId, data.name, data.breed, data.age, data.weight, data.earTag)
+    .bind(
+      id,
+      userId,
+      data.name,
+      data.breed,
+      data.age,
+      data.weight,
+      data.earTag,
+      data.imageUrl ?? null,
+    )
     .run();
   return db.prepare('SELECT * FROM cattle WHERE id = ?').bind(id).first<CattleRow>();
 }
@@ -31,6 +41,7 @@ export async function updateCattle(
     age: number;
     weight: number;
     earTag: string;
+    imageUrl: string | null;
   }>,
 ): Promise<CattleRow | null> {
   const fields: string[] = [];
@@ -55,6 +66,10 @@ export async function updateCattle(
   if (updates.earTag !== undefined) {
     fields.push('ear_tag = ?');
     values.push(updates.earTag);
+  }
+  if (updates.imageUrl !== undefined) {
+    fields.push('image_url = ?');
+    values.push(updates.imageUrl);
   }
 
   if (fields.length === 0) return null;

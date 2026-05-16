@@ -48,6 +48,8 @@ export type Bindings = {
   ANTHROPIC_MODEL?: string;
   OPENAI_API_KEY?: string;
   OPENAI_MODEL?: string;
+  CATTLE_IMAGES?: R2Bucket;
+  R2_PUBLIC_URL?: string;
 };
 
 export type AppEnv = {

@@ -10,10 +10,17 @@
       "database_id": "YOUR_DATABASE_ID_HERE"
     }
   ],
+  "r2_buckets": [
+    {
+      "binding": "CATTLE_IMAGES",
+      "bucket_name": "cattle-images"
+    }
+  ],
   "vars": {
     "MSG91_SENDER_ID": "CATTLE",
     "MSG91_TEMPLATE_ID": "",
-    "GOOGLE_CLIENT_ID": ""
+    "GOOGLE_CLIENT_ID": "",
+    "R2_PUBLIC_URL": "https://cattle-images.example.r2.dev"
   }
   // Secrets (run: wrangler secret put <NAME>)
   // MSG91_AUTH_KEY

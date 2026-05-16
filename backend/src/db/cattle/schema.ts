@@ -8,6 +8,7 @@ export const CattleRowSchema = z.object({
   age: z.number(),
   weight: z.number(),
   ear_tag: z.string(),
+  image_url: z.string().nullable(),
   stress_level: z.enum(['none', 'mild', 'moderate', 'severe', 'danger']),
   created_at: z.string(),
   updated_at: z.string(),

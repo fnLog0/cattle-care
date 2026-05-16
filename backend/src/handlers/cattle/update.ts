@@ -10,6 +10,7 @@ const UpdateCattleSchema = z.object({
   age: z.number().min(0).max(30).optional(),
   weight: z.number().min(50).max(1000).optional(),
   earTag: z.string().min(1).max(50).optional(),
+  imageUrl: z.union([z.string().url(), z.null()]).optional(),
 });
 
 export async function updateCattleHandler(c: AppContext) {
@@ -43,6 +44,7 @@ export async function updateCattleHandler(c: AppContext) {
     age: row.age,
     weight: row.weight,
     earTag: row.ear_tag,
+    imageUrl: row.image_url,
     stressLevel: row.stress_level,
     userId: row.user_id,
     createdAt: row.created_at,

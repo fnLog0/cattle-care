@@ -6,9 +6,10 @@
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "cf-typegen": "wrangler types",
-    "db:reset": "pnpm db:clean && pnpm db:import",
+    "db:reset": "pnpm db:clean && pnpm db:import && pnpm db:migrate",
     "db:clean": "bash scripts/d1-clean-local.sh",
-    "db:import": "bash scripts/d1-import-local.sh"
+    "db:import": "bash scripts/d1-import-local.sh",
+    "db:migrate": "bash scripts/d1-migrate-local.sh"
   },
   "dependencies": {
     "@langchain/anthropic": "^0.3.0",

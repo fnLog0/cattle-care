@@ -1,189 +1,200 @@
-import React, { useRef, useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  FlatList,
+  TextInput,
+  TouchableOpacity,
   SafeAreaView,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
   Alert,
   ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
-import { useAgent } from '@/hooks/use-agent';
 import { useAuth } from '@/hooks/use-auth';
-import { ChatBubble } from '@/components/chat-bubble';
-import { ChatInput } from '@/components/chat-input';
-import { QuickChips } from '@/components/quick-chips';
-import { SummaryCard } from '@/components/summary-card';
 import * as cattleService from '@/services/cattle';
-import { Message } from '@/types';
+import { Breed } from '@/types';
 import { StatusBar } from 'expo-status-bar';
 
-const BREED_CHIPS = [
-  { label: 'Zebu', value: 'Zebu' },
-  { label: 'Cross Breed', value: 'Cross Breed' },
-  { label: 'Murrah', value: 'Murrah' },
+const BREEDS: { label: string; value: Breed }[] = [
+  { label: 'Zebu', value: 'zebu' },
+  { label: 'Cross Breed', value: 'crossBreed' },
+  { label: 'Murrah', value: 'murrah' },
 ];
-
-function TypingIndicator() {
-  return (
-    <View style={styles.typingContainer}>
-      <View style={styles.typingAvatar}>
-        <Text style={styles.typingAvatarText}>AI</Text>
-      </View>
-      <View style={styles.typingBubble}>
-        <ActivityIndicator size="small" color={Colors.gray400} />
-        <Text style={styles.typingText}>Typing...</Text>
-      </View>
-    </View>
-  );
-}
 
 export default function CreateCattleScreen() {
   const router = useRouter();
   const { user } = useAuth();
-  const { messages, isTyping, sendMessage, registrationState, isRegistrationComplete, resetChat } =
-    useAgent('registration');
 
-  const flatListRef = useRef<FlatList>(null);
+  const [name, setName] = useState('');
+  const [breed, setBreed] = useState<Breed | null>(null);
+  const [age, setAge] = useState('');
+  const [weight, setWeight] = useState('');
+  const [earTag, setEarTag] = useState('');
   const [isSaving, setIsSaving] = useState(false);
-  const [showSummary, setShowSummary] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Show summary card when confirm step reached
-  React.useEffect(() => {
-    if (registrationState.step === 'confirm') {
-      setShowSummary(true);
-    }
-  }, [registrationState.step]);
+  const validate = useCallback(() => {
+    const e: Record<string, string> = {};
+    if (!name.trim()) e.name = 'Name is required';
+    if (!breed) e.breed = 'Select a breed';
 
-  const handleSend = useCallback(
-    (text: string) => {
-      setShowSummary(false);
-      sendMessage(text);
-      // Scroll to bottom after a short delay
-      setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: true });
-      }, 100);
-    },
-    [sendMessage]
-  );
+    const ageNum = parseFloat(age);
+    if (!age.trim()) e.age = 'Age is required';
+    else if (isNaN(ageNum) || ageNum < 0 || ageNum > 30) e.age = 'Age must be 0–30 years';
 
-  const handleConfirm = useCallback(async () => {
-    const { collected } = registrationState;
-    if (
-      !collected.name ||
-      !collected.breed ||
-      collected.age === undefined ||
-      collected.weight === undefined ||
-      !collected.earTag
-    ) {
-      Alert.alert('Incomplete', 'Please complete all required fields.');
-      return;
-    }
+    const weightNum = parseFloat(weight);
+    if (!weight.trim()) e.weight = 'Weight is required';
+    else if (isNaN(weightNum) || weightNum < 50 || weightNum > 1000) e.weight = 'Weight must be 50–1000 kg';
+
+    if (!earTag.trim()) e.earTag = 'Ear tag is required';
+
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  }, [name, breed, age, weight, earTag]);
+
+  const handleSubmit = useCallback(async () => {
+    if (!validate()) return;
 
     setIsSaving(true);
     try {
       await cattleService.addCattle({
-        name: collected.name,
-        breed: collected.breed as any,
-        age: collected.age,
-        weight: collected.weight,
-        earTag: collected.earTag,
-        userId: user?.id ?? 'user-1',
+        name: name.trim(),
+        breed: breed!,
+        age: parseFloat(age),
+        weight: parseFloat(weight),
+        earTag: earTag.trim().toUpperCase(),
+        userId: user?.id ?? '',
       });
-      Alert.alert('Success!', `${collected.name} has been added to your herd.`, [
+      Alert.alert('Success', `${name.trim()} has been added to your herd.`, [
         { text: 'Go to Herd', onPress: () => router.replace('/(tabs)') },
       ]);
-    } catch {
-      Alert.alert('Error', 'Failed to save cattle. Please try again.');
+    } catch (err: any) {
+      const url = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8787';
+      console.error('Add cattle error:', err);
+      Alert.alert('Error', `${err?.message}\n\nAPI URL: ${url}`);
     } finally {
       setIsSaving(false);
     }
-  }, [registrationState, user, router]);
-
-  const handleEdit = useCallback(() => {
-    setShowSummary(false);
-    resetChat();
-  }, [resetChat]);
-
-  // Determine chips to show based on step
-  const chips =
-    registrationState.step === 'breed' && !isTyping ? BREED_CHIPS : [];
-
-  const renderItem = useCallback(
-    ({ item }: { item: Message }) => <ChatBubble message={item} />,
-    []
-  );
+  }, [name, breed, age, weight, earTag, user, router, validate]);
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
-      <View style={styles.statusBarSeparator} />
       <View style={styles.headerBar}>
-        <View style={styles.headerIcon}>
-          <Text style={styles.headerIconText}>AI</Text>
-        </View>
-        <View>
-          <Text style={styles.headerTitle}>Cattle Registration</Text>
-          <Text style={styles.headerSubtitle}>AI-assisted registration</Text>
-        </View>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <Ionicons name="arrow-back" size={24} color={Colors.gray800} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Add Cattle</Text>
+        <View style={{ width: 40 }} />
       </View>
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardView}
-        keyboardVerticalOffset={0}
+        style={{ flex: 1 }}
       >
-        <FlatList
-          ref={flatListRef}
-          data={messages}
-          keyExtractor={(item) => item.id}
-          renderItem={renderItem}
-          contentContainerStyle={styles.messageList}
-          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+        <ScrollView
+          contentContainerStyle={styles.form}
+          keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
-          ListFooterComponent={
-            <>
-              {isTyping && <TypingIndicator />}
-              {showSummary && !isTyping && (
-                <SummaryCard
-                  data={registrationState.collected}
-                  onConfirm={handleConfirm}
-                  onEdit={handleEdit}
-                  isLoading={isSaving}
-                />
-              )}
-            </>
-          }
-        />
-
-        {!showSummary && (
-          <>
-            {chips.length > 0 && (
-              <QuickChips chips={chips} onSelect={handleSend} disabled={isTyping} />
-            )}
-            <ChatInput
-              onSend={handleSend}
-              disabled={isTyping || isSaving || isRegistrationComplete}
-              placeholder={
-                registrationState.step === 'name'
-                  ? 'Enter cattle name...'
-                  : registrationState.step === 'breed'
-                  ? 'Enter breed or tap a chip...'
-                  : registrationState.step === 'age'
-                  ? 'Enter age in years...'
-                  : registrationState.step === 'weight'
-                  ? 'Enter weight in kg...'
-                  : registrationState.step === 'earTag'
-                  ? 'Enter ear tag (e.g. ET-011)...'
-                  : 'Type a message...'
-              }
+        >
+          {/* Name */}
+          <View style={styles.field}>
+            <Text style={styles.label}>Name</Text>
+            <TextInput
+              style={[styles.input, errors.name && styles.inputError]}
+              placeholder="Enter cattle name"
+              placeholderTextColor={Colors.gray400}
+              value={name}
+              onChangeText={(t) => { setName(t); setErrors((p) => ({ ...p, name: '' })); }}
+              maxLength={100}
             />
-          </>
-        )}
+            {!!errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
+          </View>
+
+          {/* Breed */}
+          <View style={styles.field}>
+            <Text style={styles.label}>Breed</Text>
+            <View style={styles.breedRow}>
+              {BREEDS.map((b) => (
+                <TouchableOpacity
+                  key={b.value}
+                  style={[styles.breedChip, breed === b.value && styles.breedChipActive]}
+                  onPress={() => { setBreed(b.value); setErrors((p) => ({ ...p, breed: '' })); }}
+                >
+                  <Text style={[styles.breedChipText, breed === b.value && styles.breedChipTextActive]}>
+                    {b.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            {!!errors.breed && <Text style={styles.errorText}>{errors.breed}</Text>}
+          </View>
+
+          {/* Age */}
+          <View style={styles.field}>
+            <Text style={styles.label}>Age (years)</Text>
+            <TextInput
+              style={[styles.input, errors.age && styles.inputError]}
+              placeholder="e.g. 3"
+              placeholderTextColor={Colors.gray400}
+              value={age}
+              onChangeText={(t) => { setAge(t); setErrors((p) => ({ ...p, age: '' })); }}
+              keyboardType="decimal-pad"
+            />
+            {!!errors.age && <Text style={styles.errorText}>{errors.age}</Text>}
+          </View>
+
+          {/* Weight */}
+          <View style={styles.field}>
+            <Text style={styles.label}>Weight (kg)</Text>
+            <TextInput
+              style={[styles.input, errors.weight && styles.inputError]}
+              placeholder="e.g. 320"
+              placeholderTextColor={Colors.gray400}
+              value={weight}
+              onChangeText={(t) => { setWeight(t); setErrors((p) => ({ ...p, weight: '' })); }}
+              keyboardType="decimal-pad"
+            />
+            {!!errors.weight && <Text style={styles.errorText}>{errors.weight}</Text>}
+          </View>
+
+          {/* Ear Tag */}
+          <View style={styles.field}>
+            <Text style={styles.label}>Ear Tag</Text>
+            <TextInput
+              style={[styles.input, errors.earTag && styles.inputError]}
+              placeholder="e.g. ET-011"
+              placeholderTextColor={Colors.gray400}
+              value={earTag}
+              onChangeText={(t) => { setEarTag(t); setErrors((p) => ({ ...p, earTag: '' })); }}
+              autoCapitalize="characters"
+              maxLength={50}
+            />
+            {!!errors.earTag && <Text style={styles.errorText}>{errors.earTag}</Text>}
+          </View>
+
+          {/* Submit */}
+          <TouchableOpacity
+            style={[styles.submitBtn, isSaving && styles.submitBtnDisabled]}
+            onPress={handleSubmit}
+            disabled={isSaving}
+            activeOpacity={0.8}
+          >
+            {isSaving ? (
+              <ActivityIndicator color={Colors.white} />
+            ) : (
+              <>
+                <Ionicons name="checkmark-circle-outline" size={20} color={Colors.white} />
+                <Text style={styles.submitBtnText}>Add Cattle</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -191,63 +202,99 @@ export default function CreateCattleScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.gray50 },
-  statusBarSeparator: { height: 1, backgroundColor: Colors.gray200 },
   headerBar: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 14,
     backgroundColor: Colors.white,
     borderBottomWidth: 1,
     borderBottomColor: Colors.gray100,
-    gap: 12,
   },
-  headerIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: Colors.primary,
+  backBtn: {
+    width: 40,
+    height: 40,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  headerIconText: { fontSize: 14, fontWeight: '800', color: Colors.white },
-  headerTitle: { fontSize: 17, fontWeight: '700', color: Colors.gray800 },
-  headerSubtitle: { fontSize: 13, color: Colors.gray400 },
-  keyboardView: { flex: 1 },
-  messageList: {
-    paddingTop: 12,
-    paddingBottom: 16,
+  headerTitle: { fontSize: 18, fontWeight: '700', color: Colors.gray800 },
+  form: {
+    padding: 20,
+    paddingBottom: 40,
+    gap: 20,
   },
-  typingContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    paddingHorizontal: 16,
-    marginTop: 4,
-    gap: 8,
+  field: { gap: 6 },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.gray800,
+    marginBottom: 2,
   },
-  typingAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
-    backgroundColor: Colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  typingAvatarText: { fontSize: 11, fontWeight: '800', color: Colors.white },
-  typingBubble: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  input: {
     backgroundColor: Colors.white,
-    borderRadius: 18,
-    borderBottomLeftRadius: 4,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    gap: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: Colors.gray200,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    color: Colors.gray800,
   },
-  typingText: { fontSize: 14, color: Colors.gray400 },
+  inputError: {
+    borderColor: Colors.danger,
+  },
+  errorText: {
+    fontSize: 12,
+    color: Colors.danger,
+    marginTop: 2,
+  },
+  breedRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  breedChip: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.gray200,
+    backgroundColor: Colors.white,
+    alignItems: 'center',
+  },
+  breedChipActive: {
+    borderColor: Colors.primary,
+    backgroundColor: Colors.primaryLight,
+  },
+  breedChipText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.gray600,
+  },
+  breedChipTextActive: {
+    color: Colors.primary,
+  },
+  submitBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.primary,
+    paddingVertical: 16,
+    borderRadius: 14,
+    gap: 8,
+    marginTop: 8,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  submitBtnDisabled: {
+    opacity: 0.6,
+  },
+  submitBtnText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.white,
+  },
 });

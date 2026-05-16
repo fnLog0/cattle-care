@@ -12,13 +12,9 @@ export type Breed = 'zebu' | 'crossBreed' | 'murrah';
 export type StressLevel = 'none' | 'mild' | 'moderate' | 'severe' | 'danger';
 
 export type Vitals = {
-  id: string;
-  cattleId: string;
-  temperature: number;
-  respiratoryRate: number;
-  humidity: number;
-  heartRate: number;
-  stressIndex: number;
+  rectalTemperature: number;
+  respirationRate: number;
+  strainIndex: number;
   stressLevel: StressLevel;
   recordedAt: string;
 };
@@ -30,8 +26,9 @@ export type Cattle = {
   age: number;
   weight: number;
   earTag: string;
+  imageUrl?: string | null;
   stressLevel: StressLevel;
-  latestVitals?: Vitals;
+  latestVitals?: Vitals | null;
   userId: string;
   createdAt: string;
 };

@@ -44,12 +44,13 @@ export default function VitalsTab() {
     >
       {/* Stress gauge section */}
       <View style={styles.gaugeCard}>
-        <Text style={styles.sectionTitle}>Stress Index</Text>
+        <Text style={styles.sectionTitle}>Strain Index</Text>
         {vitals ? (
           <>
             <View style={styles.gaugeContainer}>
+              {/* Scale 0–10 strain index to the gauge's 0–100 visual range */}
               <StressGauge
-                stressIndex={vitals.stressIndex}
+                stressIndex={vitals.strainIndex * 10}
                 stressLevel={vitals.stressLevel}
                 size={180}
               />
@@ -97,39 +98,21 @@ export default function VitalsTab() {
           <Text style={styles.sectionTitle}>Current Readings</Text>
           <View style={styles.vitalsGrid}>
             <VitalCard
-              label={VITAL_RANGES.temperature.label}
-              value={vitals.temperature}
-              unit={VITAL_RANGES.temperature.unit}
+              label={VITAL_RANGES.rectalTemperature.label}
+              value={vitals.rectalTemperature}
+              unit={VITAL_RANGES.rectalTemperature.unit}
               icon="thermometer-outline"
-              min={VITAL_RANGES.temperature.min}
-              max={VITAL_RANGES.temperature.max}
+              min={VITAL_RANGES.rectalTemperature.min}
+              max={VITAL_RANGES.rectalTemperature.max}
               accentColor="#EF4444"
             />
             <VitalCard
-              label={VITAL_RANGES.respiratoryRate.label}
-              value={vitals.respiratoryRate}
-              unit={VITAL_RANGES.respiratoryRate.unit}
+              label={VITAL_RANGES.respirationRate.label}
+              value={vitals.respirationRate}
+              unit={VITAL_RANGES.respirationRate.unit}
               icon="fitness-outline"
-              min={VITAL_RANGES.respiratoryRate.min}
-              max={VITAL_RANGES.respiratoryRate.max}
-              accentColor={Colors.info}
-            />
-            <VitalCard
-              label={VITAL_RANGES.heartRate.label}
-              value={vitals.heartRate}
-              unit={VITAL_RANGES.heartRate.unit}
-              icon="heart-outline"
-              min={VITAL_RANGES.heartRate.min}
-              max={VITAL_RANGES.heartRate.max}
-              accentColor="#E11D48"
-            />
-            <VitalCard
-              label={VITAL_RANGES.humidity.label}
-              value={vitals.humidity}
-              unit={VITAL_RANGES.humidity.unit}
-              icon="water-outline"
-              min={VITAL_RANGES.humidity.min}
-              max={VITAL_RANGES.humidity.max}
+              min={VITAL_RANGES.respirationRate.min}
+              max={VITAL_RANGES.respirationRate.max}
               accentColor={Colors.info}
             />
           </View>

@@ -16,21 +16,19 @@ export const STRESS_LABELS: Record<StressLevel, string> = {
   danger: 'Danger',
 };
 
-// Stress index thresholds
-export const STRESS_THRESHOLDS = { none: 0, mild: 20, moderate: 40, severe: 60, danger: 80 };
+// Strain Index thresholds (matches backend services/cattle-stress.ts)
+export const STRAIN_INDEX_MAX = 10; // SI ≥ 8 is "danger"; pad headroom
 
-export function getStressLevel(index: number): StressLevel {
-  if (index >= 80) return 'danger';
-  if (index >= 60) return 'severe';
-  if (index >= 40) return 'moderate';
-  if (index >= 20) return 'mild';
+export function getStressLevel(strainIndex: number): StressLevel {
+  if (strainIndex >= 8) return 'danger';
+  if (strainIndex >= 6) return 'severe';
+  if (strainIndex >= 4) return 'moderate';
+  if (strainIndex >= 2) return 'mild';
   return 'none';
 }
 
 // Vital ranges for progress bars (min, max, optimal)
 export const VITAL_RANGES = {
-  temperature: { min: 35, max: 42, unit: '°C', label: 'Temperature' },
-  respiratoryRate: { min: 10, max: 40, unit: '/min', label: 'Respiratory Rate' },
-  humidity: { min: 30, max: 90, unit: '%', label: 'Humidity' },
-  heartRate: { min: 40, max: 100, unit: 'bpm', label: 'Heart Rate' },
+  rectalTemperature: { min: 35, max: 42, unit: '°C', label: 'Rectal Temperature' },
+  respirationRate: { min: 10, max: 150, unit: '/min', label: 'Respiration Rate' },
 };

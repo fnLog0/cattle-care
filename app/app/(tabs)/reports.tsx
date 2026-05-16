@@ -171,12 +171,11 @@ export default function ReportsScreen() {
                     </View>
                     {cattle.latestVitals && (
                       <View style={styles.atRiskVitals}>
-                        <SmallVital icon="thermometer-outline" value={`${cattle.latestVitals.temperature}°C`} />
-                        <SmallVital icon="fitness-outline" value={`${cattle.latestVitals.respiratoryRate}/min`} />
-                        <SmallVital icon="heart-outline" value={`${cattle.latestVitals.heartRate}bpm`} />
+                        <SmallVital icon="thermometer-outline" value={`${cattle.latestVitals.rectalTemperature}°C`} />
+                        <SmallVital icon="fitness-outline" value={`${cattle.latestVitals.respirationRate}/min`} />
                         <View style={styles.stressIndexPill}>
                           <Text style={styles.stressIndexText}>
-                            SI: {cattle.latestVitals.stressIndex.toFixed(0)}
+                            SI: {cattle.latestVitals.strainIndex.toFixed(1)}
                           </Text>
                         </View>
                       </View>

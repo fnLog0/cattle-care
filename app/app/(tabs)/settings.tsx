@@ -23,7 +23,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useTranslation } from 'react-i18next';
 import { changeLanguage, LANGUAGES, type LangCode } from '@/i18n';
 
-type BottomSheetType = 'editProfile' | 'changePassword' | 'language' | null;
+type BottomSheetType = 'editProfile' | 'language' | null;
 
 function Divider() {
   return <View style={styles.divider} />;
@@ -128,13 +128,6 @@ export default function SettingsScreen() {
           />
           <Divider />
           <MenuRow
-            icon="lock-closed-outline"
-            iconColor={Colors.info}
-            label={t('settings.changePassword')}
-            onPress={() => setActiveSheet('changePassword')}
-          />
-          <Divider />
-          <MenuRow
             icon="language-outline"
             iconColor={Colors.warning}
             label={t('settings.language')}
@@ -194,11 +187,6 @@ export default function SettingsScreen() {
           await updateUser({ fullName: name });
           setActiveSheet(null);
         }}
-      />
-
-      <ChangePasswordSheet
-        visible={activeSheet === 'changePassword'}
-        onClose={() => setActiveSheet(null)}
       />
 
       <LanguageSheet
@@ -268,72 +256,6 @@ function EditProfileSheet({
           ) : (
             <Text style={sheetStyles.saveButtonText}>{t('settings.saveChanges')}</Text>
           )}
-        </TouchableOpacity>
-      </View>
-    </BottomSheetModal>
-  );
-}
-
-// ─── Change Password Sheet ────────────────────────────────────────────────────
-
-function ChangePasswordSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
-  const { t } = useTranslation();
-  const [current, setCurrent] = useState('');
-  const [newPass, setNewPass] = useState('');
-  const [confirm, setConfirm] = useState('');
-  const [error, setError] = useState('');
-
-  function handleSave() {
-    if (!current) { setError(t('settings.currentPasswordRequired')); return; }
-    if (!newPass || newPass.length < 6) { setError(t('settings.newPasswordMinLength')); return; }
-    if (newPass !== confirm) { setError(t('settings.passwordsMismatch')); return; }
-    Alert.alert('✓', t('settings.passwordChanged'), [
-      { text: t('common.ok'), onPress: () => { setCurrent(''); setNewPass(''); setConfirm(''); setError(''); onClose(); } },
-    ]);
-  }
-
-  return (
-    <BottomSheetModal visible={visible} onClose={onClose} title={t('settings.changePassword')}>
-      <View style={sheetStyles.content}>
-        <Text style={sheetStyles.label}>{t('settings.currentPassword')}</Text>
-        <View style={sheetStyles.inputWrapper}>
-          <Ionicons name="lock-closed-outline" size={18} color={Colors.gray400} />
-          <TextInput
-            style={sheetStyles.input}
-            value={current}
-            onChangeText={(v) => { setCurrent(v); setError(''); }}
-            placeholder={t('settings.currentPasswordPlaceholder')}
-            placeholderTextColor={Colors.gray400}
-            secureTextEntry
-          />
-        </View>
-        <Text style={sheetStyles.label}>{t('settings.newPassword')}</Text>
-        <View style={sheetStyles.inputWrapper}>
-          <Ionicons name="lock-open-outline" size={18} color={Colors.gray400} />
-          <TextInput
-            style={sheetStyles.input}
-            value={newPass}
-            onChangeText={(v) => { setNewPass(v); setError(''); }}
-            placeholder={t('settings.newPasswordPlaceholder')}
-            placeholderTextColor={Colors.gray400}
-            secureTextEntry
-          />
-        </View>
-        <Text style={sheetStyles.label}>{t('settings.confirmPassword')}</Text>
-        <View style={sheetStyles.inputWrapper}>
-          <Ionicons name="lock-open-outline" size={18} color={Colors.gray400} />
-          <TextInput
-            style={sheetStyles.input}
-            value={confirm}
-            onChangeText={(v) => { setConfirm(v); setError(''); }}
-            placeholder={t('settings.confirmPasswordPlaceholder')}
-            placeholderTextColor={Colors.gray400}
-            secureTextEntry
-          />
-        </View>
-        {error ? <Text style={sheetStyles.errorText}>{error}</Text> : null}
-        <TouchableOpacity style={sheetStyles.saveButton} onPress={handleSave}>
-          <Text style={sheetStyles.saveButtonText}>{t('settings.updatePassword')}</Text>
         </TouchableOpacity>
       </View>
     </BottomSheetModal>

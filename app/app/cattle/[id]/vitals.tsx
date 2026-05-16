@@ -12,14 +12,17 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
 import { VITAL_RANGES, STRESS_LABELS, STRESS_COLORS } from '@/constants/stress';
 import { useCattleDetail } from '@/hooks/use-cattle';
+import { useVitalsHistory } from '@/hooks/use-vitals-history';
 import { StressGauge } from '@/components/stress-gauge';
 import { VitalCard } from '@/components/vital-card';
+import { VitalsTrendChart } from '@/components/vitals-trend-chart';
 import { useDetailTab } from './_layout';
 // useDetailTab provides switchToAgent for navigation
 
 export default function VitalsTab() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { cattle, isLoading } = useCattleDetail(id);
+  const { history } = useVitalsHistory(id, '30d');
   const { switchToAgent } = useDetailTab();
 
   if (isLoading) {
@@ -132,6 +135,12 @@ export default function VitalsTab() {
           </View>
         </View>
       )}
+
+      {/* Trend chart */}
+      <VitalsTrendChart
+        readings={history?.readings ?? []}
+        rangeLabel={history ? `Last ${history.range}` : undefined}
+      />
 
       {/* Ask AI CTA */}
       <TouchableOpacity

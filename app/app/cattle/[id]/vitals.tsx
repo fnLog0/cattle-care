@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -16,14 +16,16 @@ import { useVitalsHistory } from '@/hooks/use-vitals-history';
 import { StressGauge } from '@/components/stress-gauge';
 import { VitalCard } from '@/components/vital-card';
 import { VitalsTrendChart } from '@/components/vitals-trend-chart';
+import { RecordVitalsSheet } from '@/components/record-vitals-sheet';
 import { useDetailTab } from './_layout';
 // useDetailTab provides switchToAgent for navigation
 
 export default function VitalsTab() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { cattle, isLoading } = useCattleDetail(id);
-  const { history } = useVitalsHistory(id, '30d');
+  const { cattle, isLoading, refresh: refreshCattle } = useCattleDetail(id);
+  const { history, refresh: refreshHistory } = useVitalsHistory(id, '30d');
   const { switchToAgent } = useDetailTab();
+  const [recordOpen, setRecordOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -125,6 +127,16 @@ export default function VitalsTab() {
         rangeLabel={history ? `Last ${history.range}` : undefined}
       />
 
+      {/* Record vitals CTA */}
+      <TouchableOpacity
+        style={styles.recordButton}
+        onPress={() => setRecordOpen(true)}
+        activeOpacity={0.85}
+      >
+        <Ionicons name="pulse" size={20} color={Colors.white} />
+        <Text style={styles.recordButtonText}>Record vitals</Text>
+      </TouchableOpacity>
+
       {/* Ask AI CTA */}
       <TouchableOpacity
         style={styles.askAiButton}
@@ -140,6 +152,17 @@ export default function VitalsTab() {
         </View>
         <Ionicons name="chevron-forward" size={20} color={Colors.primary} />
       </TouchableOpacity>
+
+      <RecordVitalsSheet
+        visible={recordOpen}
+        cattleId={id ?? ''}
+        cattleName={cattle?.name}
+        onClose={() => setRecordOpen(false)}
+        onRecorded={() => {
+          refreshCattle();
+          refreshHistory();
+        }}
+      />
     </ScrollView>
   );
 }
@@ -186,6 +209,21 @@ const styles = StyleSheet.create({
   noVitalsText: { fontSize: 16, color: Colors.gray400 },
   vitalsSection: { gap: 12 },
   vitalsGrid: { gap: 10 },
+  recordButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.primary,
+    paddingVertical: 14,
+    borderRadius: 14,
+    gap: 8,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  recordButtonText: { fontSize: 16, fontWeight: '700', color: Colors.white },
   askAiButton: {
     flexDirection: 'row',
     alignItems: 'center',

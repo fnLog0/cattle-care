@@ -22,6 +22,7 @@ export async function addCattle(data: {
   age: number;
   weight: number;
   earTag: string;
+  imageUrl?: string;
   userId: string;
 }): Promise<Cattle> {
   return apiRequest<Cattle>('/api/cattle', {
@@ -33,6 +34,7 @@ export async function addCattle(data: {
       age: data.age,
       weight: data.weight,
       earTag: data.earTag,
+      ...(data.imageUrl ? { imageUrl: data.imageUrl } : {}),
     }),
   });
 }

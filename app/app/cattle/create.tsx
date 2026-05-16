@@ -11,12 +11,15 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { Colors } from '@/constants/theme';
 import { useAuth } from '@/hooks/use-auth';
 import * as cattleService from '@/services/cattle';
+import { uploadCattleImage } from '@/services/upload';
 import { Breed } from '@/types';
 import { StatusBar } from 'expo-status-bar';
 
@@ -35,8 +38,34 @@ export default function CreateCattleScreen() {
   const [age, setAge] = useState('');
   const [weight, setWeight] = useState('');
   const [earTag, setEarTag] = useState('');
+  const [imageLocalUri, setImageLocalUri] = useState<string | null>(null);
+  const [imageMime, setImageMime] = useState<'image/jpeg' | 'image/png' | 'image/webp'>('image/jpeg');
   const [isSaving, setIsSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const pickImage = useCallback(async () => {
+    const { granted } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!granted) {
+      Alert.alert('Permission needed', 'Allow photo library access to attach an image.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.8,
+      allowsEditing: true,
+      aspect: [1, 1],
+    });
+    if (result.canceled || !result.assets[0]) return;
+    const asset = result.assets[0];
+    setImageLocalUri(asset.uri);
+    const mime =
+      asset.mimeType === 'image/png'
+        ? 'image/png'
+        : asset.mimeType === 'image/webp'
+          ? 'image/webp'
+          : 'image/jpeg';
+    setImageMime(mime);
+  }, []);
 
   const validate = useCallback(() => {
     const e: Record<string, string> = {};
@@ -62,12 +91,24 @@ export default function CreateCattleScreen() {
 
     setIsSaving(true);
     try {
+      let uploadedUrl: string | undefined;
+      if (imageLocalUri) {
+        try {
+          const uploaded = await uploadCattleImage(imageLocalUri, imageMime);
+          uploadedUrl = uploaded.url;
+        } catch (e) {
+          // Image upload failure shouldn't block cattle creation — proceed without it.
+          console.warn('Image upload failed, creating cattle without image:', (e as Error).message);
+        }
+      }
+
       await cattleService.addCattle({
         name: name.trim(),
         breed: breed!,
         age: parseFloat(age),
         weight: parseFloat(weight),
         earTag: earTag.trim().toUpperCase(),
+        imageUrl: uploadedUrl,
         userId: user?.id ?? '',
       });
       Alert.alert('Success', `${name.trim()} has been added to your herd.`, [
@@ -80,7 +121,7 @@ export default function CreateCattleScreen() {
     } finally {
       setIsSaving(false);
     }
-  }, [name, breed, age, weight, earTag, user, router, validate]);
+  }, [name, breed, age, weight, earTag, imageLocalUri, imageMime, user, router, validate]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -102,6 +143,26 @@ export default function CreateCattleScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
+          {/* Photo */}
+          <View style={styles.field}>
+            <Text style={styles.label}>Photo (optional)</Text>
+            <TouchableOpacity style={styles.photoPicker} onPress={pickImage} activeOpacity={0.85}>
+              {imageLocalUri ? (
+                <Image source={{ uri: imageLocalUri }} style={styles.photoPreview} />
+              ) : (
+                <View style={styles.photoPlaceholder}>
+                  <Ionicons name="camera-outline" size={28} color={Colors.gray400} />
+                  <Text style={styles.photoHint}>Tap to add a photo</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+            {imageLocalUri ? (
+              <TouchableOpacity onPress={() => setImageLocalUri(null)}>
+                <Text style={styles.photoClear}>Remove photo</Text>
+              </TouchableOpacity>
+            ) : null}
+          </View>
+
           {/* Name */}
           <View style={styles.field}>
             <Text style={styles.label}>Name</Text>
@@ -249,6 +310,21 @@ const styles = StyleSheet.create({
     color: Colors.danger,
     marginTop: 2,
   },
+  photoPicker: {
+    height: 140,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: Colors.gray200,
+    borderStyle: 'dashed',
+    backgroundColor: Colors.white,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  photoPlaceholder: { alignItems: 'center', gap: 6 },
+  photoPreview: { width: '100%', height: '100%' },
+  photoHint: { fontSize: 13, color: Colors.gray400 },
+  photoClear: { fontSize: 13, color: Colors.danger, alignSelf: 'flex-end' },
   breedRow: {
     flexDirection: 'row',
     gap: 10,

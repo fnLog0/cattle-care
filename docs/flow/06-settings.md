@@ -8,16 +8,18 @@ User profile management and app preferences, accessible from bottom navigation "
 ### Profile Section
 - View/edit full name
 - View/edit profile image
-- View email (read-only)
-- Change password
+- View phone (read-only — identity is the phone number)
+
+> No password — authentication is OTP / Google only (see `flow/01-auth.md`).
 
 ### App Preferences
+- Language selection (English / Hindi)
 - Notification preferences (future)
 - Temperature unit (°C / °F) (future)
-- Language selection (future)
 
 ### Account Actions
-- Logout (clear JWT, navigate to Onboarding)
+- Logout — `POST /api/auth/logout`
+- Logout from all sessions — `POST /api/auth/logout-all`
 - Delete account (future)
 
 ## REST API Endpoints
@@ -31,15 +33,16 @@ User profile management and app preferences, accessible from bottom navigation "
 | Method | Path | Input (JSON Body) | Output | Auth |
 |--------|------|-------------------|--------|------|
 | `PUT` | `/api/auth/profile` | `{ fullName, image }` | `User` | ✅ Yes |
-| `PUT` | `/api/auth/password` | `{ currentPassword, newPassword }` | `{ user, token }` | ✅ Yes |
+| `POST` | `/api/auth/logout` | — | `{ message }` | ✅ Yes |
+| `POST` | `/api/auth/logout-all` | — | `{ message }` | ✅ Yes |
 
 ## Flow
 ```
 1. User taps Settings in bottom nav
 2. GET /api/auth/me → display profile info
 3. Edit fields → PUT /api/auth/profile
-4. Change password → PUT /api/auth/password
-5. Logout → clear AsyncStorage JWT, navigate to Onboarding
+4. Switch language → updates i18next + AsyncStorage; no API call
+5. Logout → POST /api/auth/logout, clear AsyncStorage JWT, navigate to Onboarding
 ```
 
 ## Migration Notes

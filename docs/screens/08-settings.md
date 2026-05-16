@@ -25,8 +25,6 @@ Simple profile management and app settings. Clean and minimal.
 │  ┌─────────────────────────────┐    │
 │  │  👤  Edit Profile         ▸ │    │  Menu row
 │  ├─────────────────────────────┤    │
-│  │  🔒  Change Password     ▸ │    │  Menu row
-│  ├─────────────────────────────┤    │
 │  │  🌐  Language / भाषा     ▸ │    │  Menu row → language picker
 │  └─────────────────────────────┘    │
 │                                     │
@@ -52,7 +50,7 @@ Simple profile management and app settings. Clean and minimal.
 ## Menu Row Specs
 ```
 ┌─────────────────────────────────────┐
-│  🔒  Change Password            ▸  │
+│  🌐  Language / भाषा            ▸  │
 └─────────────────────────────────────┘
 - Height: 52px
 - Icon: 24px, left
@@ -76,34 +74,6 @@ Simple profile management and app settings. Clean and minimal.
 │  │                             │    │
 │  │  ┌───────────────────────┐  │    │
 │  │  │     Save Changes      │  │    │  Primary button
-│  │  └───────────────────────┘  │    │
-│  └─────────────────────────────┘    │
-└─────────────────────────────────────┘
-```
-
-## Change Password (Bottom Sheet)
-```
-┌─────────────────────────────────────┐
-│  ┌─────────────────────────────┐    │
-│  │  Change Password            │    │  H2
-│  │                             │    │
-│  │  Current Password           │    │
-│  │  ┌───────────────────────┐  │    │
-│  │  │ ••••••••          👁  │  │    │
-│  │  └───────────────────────┘  │    │
-│  │                             │    │
-│  │  New Password               │    │
-│  │  ┌───────────────────────┐  │    │
-│  │  │ ••••••••          👁  │  │    │
-│  │  └───────────────────────┘  │    │
-│  │                             │    │
-│  │  Confirm New Password       │    │
-│  │  ┌───────────────────────┐  │    │
-│  │  │ ••••••••          👁  │  │    │
-│  │  └───────────────────────┘  │    │
-│  │                             │    │
-│  │  ┌───────────────────────┐  │    │
-│  │  │   Update Password     │  │    │  Primary button
 │  │  └───────────────────────┘  │    │
 │  └─────────────────────────────┘    │
 └─────────────────────────────────────┘

@@ -34,7 +34,7 @@ CattleCare AI is a livestock health monitoring app. Farmers register cattle via 
 
 | Module | Doc | Description |
 |--------|-----|-------------|
-| Auth | [01-auth.md](./01-auth.md) | Registration, login, Google OAuth, password reset |
+| Auth | [01-auth.md](./01-auth.md) | Phone OTP login, Google sign-in, session management |
 | Cattle | [02-cattle.md](./02-cattle.md) | Cattle CRUD, listing, search |
 | Vitals & Stress | [03-vitals-stress.md](./03-vitals-stress.md) | Vital recording, stress index calculation |
 | AI Agent | [04-ai-agents.md](./04-ai-agents.md) | Health agent (vitals recording + analysis via chat) |

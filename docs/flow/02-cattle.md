@@ -90,10 +90,15 @@ than a multi-message AI conversation for 5 fixed fields.
 ```
 1. Farmer taps photo area → action sheet: "Take Photo" / "Choose from Gallery"
 2. Uses expo-image-picker (camera or media library)
-3. Image resized client-side (max 800px, JPEG 80% quality)
-4. Upload to Cloudflare R2 bucket: PUT /api/upload/cattle-image
-5. Returns imageUrl → attached to POST /api/cattle body
-6. If skipped → default placeholder icon (🐄) shown in list/detail
+3. Image resized client-side (max 800px, JPEG 80% quality) — recommended, not enforced
+4. Upload to Cloudflare R2 via `POST /api/upload/cattle-image` (multipart, field `image`)
+5. Worker writes the object to the `CATTLE_IMAGES` R2 bucket and returns `{ key, url, ... }`
+6. App attaches `imageUrl` to the `POST /api/cattle` body
+7. If skipped → default placeholder icon (🐄) shown in list/detail
+
+> **Bucket setup** (one time): `wrangler r2 bucket create cattle-images`
+> then enable public access (or attach a custom domain) and set the worker var
+> `R2_PUBLIC_URL` to the matching base URL.
 ```
 
 ### Search Flow

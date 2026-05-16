@@ -30,6 +30,76 @@ export async function getAllCattleByUser(db: D1Database, userId: string): Promis
   return result.results;
 }
 
+export type CattleWithVitalsRow = CattleRow & {
+  latest_strain_index: number | null;
+  latest_rectal_temperature: number | null;
+  latest_respiration_rate: number | null;
+  latest_recorded_at: string | null;
+};
+
+const LATEST_VITALS_JOIN = `LEFT JOIN vitals v ON v.id = (
+    SELECT id FROM vitals WHERE cattle_id = c.id ORDER BY recorded_at DESC LIMIT 1
+  )`;
+
+const LATEST_VITALS_COLUMNS = `
+    v.strain_index       AS latest_strain_index,
+    v.rectal_temperature AS latest_rectal_temperature,
+    v.respiration_rate   AS latest_respiration_rate,
+    v.recorded_at        AS latest_recorded_at`;
+
+export async function getCattleByIdAndUserWithVitals(
+  db: D1Database,
+  id: string,
+  userId: string,
+): Promise<CattleWithVitalsRow | null> {
+  return db
+    .prepare(
+      `SELECT c.*, ${LATEST_VITALS_COLUMNS}
+         FROM cattle c
+         ${LATEST_VITALS_JOIN}
+        WHERE c.id = ? AND c.user_id = ?`,
+    )
+    .bind(id, userId)
+    .first<CattleWithVitalsRow>();
+}
+
+export async function getAllCattleByUserWithVitals(
+  db: D1Database,
+  userId: string,
+): Promise<CattleWithVitalsRow[]> {
+  const result = await db
+    .prepare(
+      `SELECT c.*, ${LATEST_VITALS_COLUMNS}
+         FROM cattle c
+         ${LATEST_VITALS_JOIN}
+        WHERE c.user_id = ?
+        ORDER BY c.created_at DESC`,
+    )
+    .bind(userId)
+    .all<CattleWithVitalsRow>();
+  return result.results;
+}
+
+export async function searchCattleByUserWithVitals(
+  db: D1Database,
+  userId: string,
+  query: string,
+): Promise<CattleWithVitalsRow[]> {
+  const like = `%${query}%`;
+  const result = await db
+    .prepare(
+      `SELECT c.*, ${LATEST_VITALS_COLUMNS}
+         FROM cattle c
+         ${LATEST_VITALS_JOIN}
+        WHERE c.user_id = ?
+          AND (c.name LIKE ? OR c.ear_tag LIKE ?)
+        ORDER BY c.created_at DESC`,
+    )
+    .bind(userId, like, like)
+    .all<CattleWithVitalsRow>();
+  return result.results;
+}
+
 const AT_RISK_LEVELS = ['moderate', 'severe', 'danger'] as const;
 
 export type StressDistribution = Record<CattleRow['stress_level'], number>;
@@ -62,22 +132,24 @@ export async function getStressDistribution(
 export async function getAtRiskCattleByUser(
   db: D1Database,
   userId: string,
-): Promise<CattleRow[]> {
+): Promise<CattleWithVitalsRow[]> {
   const placeholders = AT_RISK_LEVELS.map(() => '?').join(',');
   const result = await db
     .prepare(
-      `SELECT * FROM cattle
-        WHERE user_id = ?
-          AND stress_level IN (${placeholders})
-        ORDER BY CASE stress_level
+      `SELECT c.*, ${LATEST_VITALS_COLUMNS}
+         FROM cattle c
+         ${LATEST_VITALS_JOIN}
+        WHERE c.user_id = ?
+          AND c.stress_level IN (${placeholders})
+        ORDER BY CASE c.stress_level
                    WHEN 'danger' THEN 0
                    WHEN 'severe' THEN 1
                    WHEN 'moderate' THEN 2
                    ELSE 3
-                 END, updated_at DESC`,
+                 END, c.updated_at DESC`,
     )
     .bind(userId, ...AT_RISK_LEVELS)
-    .all<CattleRow>();
+    .all<CattleWithVitalsRow>();
   return result.results;
 }
 

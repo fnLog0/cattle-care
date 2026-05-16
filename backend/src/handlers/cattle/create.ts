@@ -3,6 +3,7 @@ import type { AppContext } from '../../types';
 import { getCattleByEarTag, createCattle } from '../../db';
 import { getDb } from '../../utils/db';
 import { success, error } from '../../utils/responses';
+import { serializeCattle } from './serialize';
 
 const CreateCattleSchema = z.object({
   name: z.string().min(1).max(100),
@@ -39,20 +40,5 @@ export async function createCattleHandler(c: AppContext) {
   });
   if (!row) return error(c, 'Failed to create cattle', 500);
 
-  return success(
-    c,
-    {
-      id: row.id,
-      name: row.name,
-      breed: row.breed,
-      age: row.age,
-      weight: row.weight,
-      earTag: row.ear_tag,
-      imageUrl: row.image_url,
-      stressLevel: row.stress_level,
-      userId: row.user_id,
-      createdAt: row.created_at,
-    },
-    201,
-  );
+  return success(c, { ...serializeCattle(row), latestVitals: null }, 201);
 }

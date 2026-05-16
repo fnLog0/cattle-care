@@ -1,8 +1,10 @@
 import { z } from 'zod';
 import type { AppContext } from '../../types';
 import { getCattleByIdAndUser, getCattleByEarTag, updateCattle } from '../../db';
+import { getCattleByIdAndUserWithVitals } from '../../db/cattle/queries';
 import { getDb } from '../../utils/db';
 import { success, error } from '../../utils/responses';
+import { serializeCattleWithVitals } from './serialize';
 
 const UpdateCattleSchema = z.object({
   name: z.string().min(1).max(100).optional(),
@@ -37,16 +39,6 @@ export async function updateCattleHandler(c: AppContext) {
   const row = await updateCattle(db, id, user.id, updates);
   if (!row) return error(c, 'No changes made', 400);
 
-  return success(c, {
-    id: row.id,
-    name: row.name,
-    breed: row.breed,
-    age: row.age,
-    weight: row.weight,
-    earTag: row.ear_tag,
-    imageUrl: row.image_url,
-    stressLevel: row.stress_level,
-    userId: row.user_id,
-    createdAt: row.created_at,
-  });
+  const enriched = await getCattleByIdAndUserWithVitals(db, row.id, user.id);
+  return success(c, enriched ? serializeCattleWithVitals(enriched) : null);
 }

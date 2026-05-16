@@ -43,6 +43,11 @@ export type Bindings = {
   GOOGLE_CLIENT_ID: string;
   GOOGLE_CLIENT_SECRET: string;
   DEV_MODE: string;
+  AGENT_PROVIDER?: 'anthropic' | 'openai';
+  ANTHROPIC_API_KEY?: string;
+  ANTHROPIC_MODEL?: string;
+  OPENAI_API_KEY?: string;
+  OPENAI_MODEL?: string;
 };
 
 export type AppEnv = {

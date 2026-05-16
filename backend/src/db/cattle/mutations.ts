@@ -73,11 +73,14 @@ export async function updateCattle(
 export async function updateCattleStressLevel(
   db: D1Database,
   id: string,
+  userId: string,
   stressLevel: CattleRow['stress_level'],
 ): Promise<void> {
   await db
-    .prepare("UPDATE cattle SET stress_level = ?, updated_at = datetime('now') WHERE id = ?")
-    .bind(stressLevel, id)
+    .prepare(
+      "UPDATE cattle SET stress_level = ?, updated_at = datetime('now') WHERE id = ? AND user_id = ?",
+    )
+    .bind(stressLevel, id, userId)
     .run();
 }
 

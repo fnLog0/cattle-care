@@ -11,6 +11,10 @@
     "db:import": "bash scripts/d1-import-local.sh"
   },
   "dependencies": {
+    "@langchain/anthropic": "^0.3.0",
+    "@langchain/core": "^0.3.0",
+    "@langchain/langgraph": "^0.2.0",
+    "@langchain/openai": "^0.3.0",
     "hono": "^4.6.0",
     "jose": "^5.9.0",
     "zod": "^3.23.8"

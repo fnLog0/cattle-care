@@ -21,3 +21,17 @@ JWT_SECRET=your_jwt_secret_here
 
 # Set to 'true' to skip MSG91 and use OTP 1234 locally (never set in production)
 DEV_MODE=true
+
+# ─── Health Agent ─────────────────────────────────────────────────────────────
+# Pick which LLM the agent talks to: "anthropic" (default) or "openai".
+# AGENT_PROVIDER=anthropic
+
+# Anthropic (https://console.anthropic.com → API Keys)
+ANTHROPIC_API_KEY=sk-ant-xxx
+# Optional model override; defaults to claude-sonnet-4-20250514
+# ANTHROPIC_MODEL=claude-sonnet-4-20250514
+
+# OpenAI (https://platform.openai.com → API Keys)
+# OPENAI_API_KEY=sk-xxx
+# Optional model override; defaults to gpt-4.1
+# OPENAI_MODEL=gpt-4.1

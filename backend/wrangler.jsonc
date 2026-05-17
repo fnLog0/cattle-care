@@ -24,7 +24,8 @@
     "MSG91_SENDER_ID": "CATTLE",
     "MSG91_TEMPLATE_ID": "",
     "GOOGLE_CLIENT_ID": "",
-    "R2_PUBLIC_URL": "https://pub-5c45241ccd504bf9b3fd47a2fcebb019.r2.dev"
+    "R2_PUBLIC_URL": "https://pub-5c45241ccd504bf9b3fd47a2fcebb019.r2.dev",
+    "AGENT_PROVIDER": "openai"
   }
   // Secrets (run: wrangler secret put <NAME>)
   // MSG91_AUTH_KEY

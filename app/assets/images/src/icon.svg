@@ -1,0 +1,49 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#16A34A"/>
+      <stop offset="100%" stop-color="#15803D"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+  
+  <g transform="translate(820, 220)">
+    <path
+      d="M 0 0 Q 60 -80 140 -40 Q 100 40 0 40 Z"
+      fill="#86EFAC"
+      transform="rotate(-20)"
+    />
+    <path d="M 0 0 Q 30 -30 100 -20" stroke="#15803D" stroke-width="4" fill="none" transform="rotate(-20)"/>
+  </g>
+  
+  <g transform="translate(512, 540)">
+    <!-- left ear -->
+    <ellipse cx="-260" cy="-30" rx="90" ry="120" fill="#FFFFFF" transform="rotate(-25 -260 -30)"/>
+    <ellipse cx="-260" cy="-30" rx="40" ry="70" fill="#15803D" opacity="0.25" transform="rotate(-25 -260 -30)"/>
+    <!-- right ear -->
+    <ellipse cx="260" cy="-30" rx="90" ry="120" fill="#FFFFFF" transform="rotate(25 260 -30)"/>
+    <ellipse cx="260" cy="-30" rx="40" ry="70" fill="#15803D" opacity="0.25" transform="rotate(25 260 -30)"/>
+    <!-- horns -->
+    <path d="M -150 -260 Q -190 -340 -120 -360 Q -100 -300 -130 -240 Z" fill="#FFFFFF"/>
+    <path d="M 150 -260 Q 190 -340 120 -360 Q 100 -300 130 -240 Z" fill="#FFFFFF"/>
+    <!-- head (rounded square) -->
+    <rect x="-220" y="-200" width="440" height="380" rx="160" ry="160" fill="#FFFFFF"/>
+    <!-- spots -->
+    <ellipse cx="-110" cy="-100" rx="55" ry="40" fill="#15803D" opacity="0.18"/>
+    <ellipse cx="140" cy="-140" rx="38" ry="28" fill="#15803D" opacity="0.18"/>
+    <!-- snout -->
+    <ellipse cx="0" cy="100" rx="180" ry="120" fill="#15803D" opacity="0.20"/>
+    <!-- nostrils -->
+    <ellipse cx="-55" cy="100" rx="14" ry="20" fill="#15803D"/>
+    <ellipse cx="55" cy="100" rx="14" ry="20" fill="#15803D"/>
+    <!-- eyes -->
+    <circle cx="-95" cy="-20" r="22" fill="#15803D"/>
+    <circle cx="95" cy="-20" r="22" fill="#15803D"/>
+    <!-- eye highlights -->
+    <circle cx="-87" cy="-28" r="8" fill="#FFFFFF"/>
+    <circle cx="103" cy="-28" r="8" fill="#FFFFFF"/>
+    <!-- smile -->
+    <path d="M -45 165 Q 0 195 45 165" stroke="#15803D" stroke-width="8" stroke-linecap="round" fill="none"/>
+  </g>
+</svg>

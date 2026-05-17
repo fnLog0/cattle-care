@@ -49,6 +49,13 @@ type HealthResponse = {
   };
 };
 
+export type AgentLanguage = 'en' | 'hi';
+
+export type ChatHealthOptions = {
+  location?: { latitude: number; longitude: number };
+  language?: AgentLanguage;
+};
+
 /**
  * Talk to the backend Health Agent (LangGraph workflow).
  * Returns the assistant reply as a string for now; the full payload is
@@ -57,16 +64,16 @@ type HealthResponse = {
 export async function chatHealth(
   message: string,
   cattle?: Cattle,
-  location?: { latitude: number; longitude: number },
+  options?: ChatHealthOptions,
 ): Promise<string> {
-  const result = await chatHealthDetailed(message, cattle, location);
+  const result = await chatHealthDetailed(message, cattle, options);
   return result.reply;
 }
 
 export async function chatHealthDetailed(
   message: string,
   cattle?: Cattle,
-  location?: { latitude: number; longitude: number },
+  options?: ChatHealthOptions,
 ): Promise<HealthResponse> {
   if (!cattle) {
     throw new Error('chatHealth requires a cattle context');
@@ -78,7 +85,10 @@ export async function chatHealthDetailed(
     body: JSON.stringify({
       cattleId: cattle.id,
       message,
-      ...(location ? { latitude: location.latitude, longitude: location.longitude } : {}),
+      ...(options?.location
+        ? { latitude: options.location.latitude, longitude: options.location.longitude }
+        : {}),
+      ...(options?.language ? { language: options.language } : {}),
     }),
   });
 }

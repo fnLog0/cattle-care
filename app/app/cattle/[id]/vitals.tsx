@@ -9,14 +9,18 @@ import {
 } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { Colors } from '@/constants/theme';
-import { VITAL_RANGES, STRESS_LABELS, STRESS_COLORS } from '@/constants/stress';
+import { VITAL_RANGES, STRESS_COLORS } from '@/constants/stress';
 import { useCattleDetail } from '@/hooks/use-cattle';
 import { useVitalsHistory } from '@/hooks/use-vitals-history';
+import { useLocation } from '@/hooks/use-location';
+import { useEnvironmentalStress } from '@/hooks/use-environmental-stress';
 import { StressGauge } from '@/components/stress-gauge';
 import { VitalCard } from '@/components/vital-card';
 import { VitalsTrendChart } from '@/components/vitals-trend-chart';
 import { RecordVitalsSheet } from '@/components/record-vitals-sheet';
+import { EnvironmentalStressCard } from '@/components/environmental-stress-card';
 import { useDetailTab } from './_layout';
 // useDetailTab provides switchToAgent for navigation
 
@@ -26,6 +30,9 @@ export default function VitalsTab() {
   const { history, refresh: refreshHistory } = useVitalsHistory(id, '30d');
   const { switchToAgent } = useDetailTab();
   const [recordOpen, setRecordOpen] = useState(false);
+  const { t } = useTranslation();
+  const { coords, isLoading: locLoading } = useLocation();
+  const { data: envStress, isLoading: envLoading } = useEnvironmentalStress(coords);
 
   if (isLoading) {
     return (
@@ -44,9 +51,16 @@ export default function VitalsTab() {
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
     >
+      {/* Environmental stress (auto-fetched from device GPS + Open-Meteo) */}
+      <EnvironmentalStressCard
+        data={envStress}
+        isLoading={locLoading || envLoading}
+        hasLocation={!!coords}
+      />
+
       {/* Stress gauge section */}
       <View style={styles.gaugeCard}>
-        <Text style={styles.sectionTitle}>Strain Index</Text>
+        <Text style={styles.sectionTitle}>{t('vitals.strainIndex')}</Text>
         {vitals ? (
           <>
             <View style={styles.gaugeContainer}>
@@ -70,26 +84,18 @@ export default function VitalsTab() {
                 color={stressColor}
               />
               <Text style={[styles.stressAlertText, { color: stressColor }]}>
-                {vitals.stressLevel === 'none'
-                  ? `${cattle?.name} is healthy and stress-free.`
-                  : vitals.stressLevel === 'mild'
-                  ? `${cattle?.name} shows mild stress. Monitor closely.`
-                  : vitals.stressLevel === 'moderate'
-                  ? `${cattle?.name} is under moderate stress. Take action.`
-                  : vitals.stressLevel === 'severe'
-                  ? `${cattle?.name} is severely stressed! Immediate attention needed.`
-                  : `DANGER: ${cattle?.name} is in critical condition! Contact a vet now.`}
+                {t(`vitals.stress${vitals.stressLevel.charAt(0).toUpperCase()}${vitals.stressLevel.slice(1)}`, { name: cattle?.name ?? '' })}
               </Text>
             </View>
             <Text style={styles.lastUpdated}>
               <Ionicons name="time-outline" size={13} color={Colors.gray400} />{' '}
-              Last updated: {new Date(vitals.recordedAt).toLocaleString()}
+              {t('vitals.lastUpdated', { date: new Date(vitals.recordedAt).toLocaleString() })}
             </Text>
           </>
         ) : (
           <View style={styles.noVitals}>
             <Ionicons name="pulse-outline" size={40} color={Colors.gray400} />
-            <Text style={styles.noVitalsText}>No vitals recorded yet</Text>
+            <Text style={styles.noVitalsText}>{t('vitals.noVitals')}</Text>
           </View>
         )}
       </View>
@@ -97,10 +103,10 @@ export default function VitalsTab() {
       {/* Vital cards */}
       {vitals && (
         <View style={styles.vitalsSection}>
-          <Text style={styles.sectionTitle}>Current Readings</Text>
+          <Text style={styles.sectionTitle}>{t('vitals.currentReadings')}</Text>
           <View style={styles.vitalsGrid}>
             <VitalCard
-              label={VITAL_RANGES.rectalTemperature.label}
+              label={t('vitals.rectalTemperature')}
               value={vitals.rectalTemperature}
               unit={VITAL_RANGES.rectalTemperature.unit}
               icon="thermometer-outline"
@@ -109,7 +115,7 @@ export default function VitalsTab() {
               accentColor="#EF4444"
             />
             <VitalCard
-              label={VITAL_RANGES.respirationRate.label}
+              label={t('vitals.respirationRate')}
               value={vitals.respirationRate}
               unit={VITAL_RANGES.respirationRate.unit}
               icon="fitness-outline"
@@ -124,7 +130,7 @@ export default function VitalsTab() {
       {/* Trend chart */}
       <VitalsTrendChart
         readings={history?.readings ?? []}
-        rangeLabel={history ? `Last ${history.range}` : undefined}
+        rangeLabel={history ? t('vitals.trendRange', { range: history.range }) : undefined}
       />
 
       {/* Record vitals CTA */}
@@ -134,7 +140,7 @@ export default function VitalsTab() {
         activeOpacity={0.85}
       >
         <Ionicons name="pulse" size={20} color={Colors.white} />
-        <Text style={styles.recordButtonText}>Record vitals</Text>
+        <Text style={styles.recordButtonText}>{t('vitals.recordVitals')}</Text>
       </TouchableOpacity>
 
       {/* Ask AI CTA */}
@@ -146,8 +152,8 @@ export default function VitalsTab() {
         <View style={styles.askAiLeft}>
           <Ionicons name="chatbubbles" size={22} color={Colors.primary} />
           <View>
-            <Text style={styles.askAiTitle}>Ask AI Health Assistant</Text>
-            <Text style={styles.askAiSubtitle}>Get personalized health advice</Text>
+            <Text style={styles.askAiTitle}>{t('vitals.askAi')}</Text>
+            <Text style={styles.askAiSubtitle}>{t('vitals.askAiSub')}</Text>
           </View>
         </View>
         <Ionicons name="chevron-forward" size={20} color={Colors.primary} />

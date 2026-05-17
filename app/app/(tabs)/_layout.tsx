@@ -49,6 +49,15 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="weather"
+        options={{
+          title: t('tabs.weather'),
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="partly-sunny" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="settings"
         options={{
           title: t('tabs.settings'),

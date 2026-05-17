@@ -1,4 +1,4 @@
-import React, { useRef, useCallback } from 'react';
+import React, { useRef, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -6,7 +6,9 @@ import {
   FlatList,
   ActivityIndicator,
 } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { useLocalSearchParams } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { Colors } from '@/constants/theme';
 import { useCattleDetail } from '@/hooks/use-cattle';
 import { useAgent } from '@/hooks/use-agent';
@@ -15,23 +17,12 @@ import { ChatInput } from '@/components/chat-input';
 import { QuickChips } from '@/components/quick-chips';
 import { Message } from '@/types';
 
-const HEALTH_CHIPS = [
-  { label: 'Analyze stress', value: 'Analyze stress' },
-  { label: 'Health risks?', value: 'What are the health risks?' },
-  { label: 'Recommend treatment', value: 'Recommend treatment' },
-  { label: 'Check temperature', value: 'Check temperature' },
-  { label: 'Feeding advice', value: 'Feeding advice' },
-];
-
-function TypingIndicator() {
+function TypingIndicator({ label }: { label: string }) {
   return (
     <View style={styles.typingContainer}>
-      <View style={styles.typingAvatar}>
-        <Text style={styles.typingAvatarText}>AI</Text>
-      </View>
       <View style={styles.typingBubble}>
         <ActivityIndicator size="small" color={Colors.gray400} />
-        <Text style={styles.typingText}>Analyzing...</Text>
+        <Text style={styles.typingText}>{label}</Text>
       </View>
     </View>
   );
@@ -42,6 +33,18 @@ export default function AgentTab() {
   const { cattle } = useCattleDetail(id);
   const { messages, isTyping, sendMessage } = useAgent('health', cattle ?? undefined);
   const flatListRef = useRef<FlatList>(null);
+  const { t } = useTranslation();
+
+  const HEALTH_CHIPS = useMemo(
+    () => [
+      { label: t('agent.chipAnalyze'), value: t('agent.chipAnalyze') },
+      { label: t('agent.chipRisks'), value: t('agent.chipRisks') },
+      { label: t('agent.chipTreatment'), value: t('agent.chipTreatment') },
+      { label: t('agent.chipTemp'), value: t('agent.chipTemp') },
+      { label: t('agent.chipFeeding'), value: t('agent.chipFeeding') },
+    ],
+    [t],
+  );
 
   const handleSend = useCallback(
     (text: string) => {
@@ -50,16 +53,20 @@ export default function AgentTab() {
         flatListRef.current?.scrollToEnd({ animated: true });
       }, 100);
     },
-    [sendMessage]
+    [sendMessage],
   );
 
   const renderItem = useCallback(
     ({ item }: { item: Message }) => <ChatBubble message={item} />,
-    []
+    [],
   );
 
   return (
-    <View style={styles.container}>
+    // react-native-keyboard-controller's KeyboardAvoidingView is a drop-in
+    // replacement for RN's, but it tracks the keyboard frame-by-frame using
+    // a native module — input bar follows the keyboard exactly, no offset
+    // calculations needed.
+    <KeyboardAvoidingView style={styles.container} behavior="padding">
       <FlatList
         ref={flatListRef}
         data={messages}
@@ -68,16 +75,18 @@ export default function AgentTab() {
         contentContainerStyle={styles.messageList}
         onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
         showsVerticalScrollIndicator={false}
-        ListFooterComponent={isTyping ? <TypingIndicator /> : null}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        ListFooterComponent={isTyping ? <TypingIndicator label={t('agent.typing')} /> : null}
       />
 
       <QuickChips chips={HEALTH_CHIPS} onSelect={handleSend} disabled={isTyping} />
       <ChatInput
         onSend={handleSend}
         disabled={isTyping}
-        placeholder="Ask about health, stress, treatment..."
+        placeholder={t('agent.placeholder')}
       />
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -85,21 +94,10 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.gray50 },
   messageList: { paddingTop: 12, paddingBottom: 16 },
   typingContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
     paddingHorizontal: 16,
     marginTop: 4,
-    gap: 8,
+    alignItems: 'flex-start',
   },
-  typingAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
-    backgroundColor: Colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  typingAvatarText: { fontSize: 11, fontWeight: '800', color: Colors.white },
   typingBubble: {
     flexDirection: 'row',
     alignItems: 'center',

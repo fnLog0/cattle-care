@@ -21,7 +21,7 @@ const RESEND_SECONDS = 30;
 
 export default function OtpScreen() {
   const router = useRouter();
-  const { phone } = useLocalSearchParams<{ phone: string }>();
+  const { phone, otp: prefilledOtp } = useLocalSearchParams<{ phone: string; otp?: string }>();
   const { sendOtp, verifyOtp } = useAuth();
   const { t } = useTranslation();
 
@@ -37,8 +37,12 @@ export default function OtpScreen() {
   ];
 
   useEffect(() => {
-    refs[0]?.current?.focus();
-  }, []);
+    if (prefilledOtp && prefilledOtp.length === OTP_LENGTH) {
+      setDigits(prefilledOtp.split(''));
+    } else {
+      refs[0]?.current?.focus();
+    }
+  }, [prefilledOtp]);
 
   useEffect(() => {
     if (countdown <= 0) return;

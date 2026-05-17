@@ -11,6 +11,7 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { useLocalSearchParams, useRouter, usePathname, Slot } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { Colors } from '@/constants/theme';
 import { useCattleDetail } from '@/hooks/use-cattle';
 
@@ -38,6 +39,7 @@ export default function CattleDetailLayout() {
   const router = useRouter();
   const pathname = usePathname();
   const { cattle, isLoading, deleteCattle } = useCattleDetail(id);
+  const { t } = useTranslation();
 
   // Determine active tab from current path
   const isAgentTab = pathname.endsWith('/agent');
@@ -91,65 +93,74 @@ export default function CattleDetailLayout() {
 
   return (
     <DetailTabContext.Provider value={{ switchToAgent: navigateAgent }}>
-      <StatusBar style="light" backgroundColor={Colors.primary} />
-      <SafeAreaView style={styles.container}>
-      <View style={styles.statusBarSeparator} />
-        {/* Top navigation bar */}
-        <View style={styles.navBar}>
-          <TouchableOpacity style={styles.navBackBtn} onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={22} color={Colors.white} />
-          </TouchableOpacity>
-          <View style={styles.navCenter}>
-            <Text style={styles.navTitle}>{cattle.name}</Text>
-            <Text style={styles.navSubtitle}>
-              {BREED_LABELS[cattle.breed] ?? cattle.breed} · {cattle.earTag}
-            </Text>
+      <StatusBar style={isAgentTab ? 'dark' : 'light'} backgroundColor={isAgentTab ? Colors.white : Colors.primary} />
+      <SafeAreaView style={[styles.container, isAgentTab && styles.containerAgent]}>
+        {isAgentTab ? (
+          // Compact header on AI chat — back button + cattle name only,
+          // maximizes vertical space for the conversation.
+          <View style={styles.compactHeader}>
+            <TouchableOpacity style={styles.compactBackBtn} onPress={() => router.back()}>
+              <Ionicons name="arrow-back" size={22} color={Colors.gray800} />
+            </TouchableOpacity>
+            <View style={styles.compactCenter}>
+              <Text style={styles.compactTitle} numberOfLines={1}>
+                {cattle.name}
+              </Text>
+              <Text style={styles.compactSubtitle}>{t('agent.title')}</Text>
+            </View>
+            <TouchableOpacity style={styles.compactSwitch} onPress={navigateVitals}>
+              <Ionicons name="pulse" size={20} color={Colors.primary} />
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete}>
-            <Ionicons name="trash-outline" size={20} color={Colors.white} />
-          </TouchableOpacity>
-        </View>
+        ) : (
+          <>
+            <View style={styles.statusBarSeparator} />
+            {/* Top navigation bar */}
+            <View style={styles.navBar}>
+              <TouchableOpacity style={styles.navBackBtn} onPress={() => router.back()}>
+                <Ionicons name="arrow-back" size={22} color={Colors.white} />
+              </TouchableOpacity>
+              <View style={styles.navCenter}>
+                <Text style={styles.navTitle}>{cattle.name}</Text>
+                <Text style={styles.navSubtitle}>
+                  {BREED_LABELS[cattle.breed] ?? cattle.breed} · {cattle.earTag}
+                </Text>
+              </View>
+              <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete}>
+                <Ionicons name="trash-outline" size={20} color={Colors.white} />
+              </TouchableOpacity>
+            </View>
 
-        {/* Cattle info strip */}
-        <View style={styles.infoStrip}>
-          <InfoPill icon="time-outline" value={`${cattle.age}y old`} />
-          <View style={styles.infoDivider} />
-          <InfoPill icon="fitness-outline" value={`${cattle.weight} kg`} />
-          <View style={styles.infoDivider} />
-          <InfoPill icon="pricetag-outline" value={cattle.earTag} />
-        </View>
+            {/* Cattle info strip */}
+            <View style={styles.infoStrip}>
+              <InfoPill icon="time-outline" value={`${cattle.age}y old`} />
+              <View style={styles.infoDivider} />
+              <InfoPill icon="fitness-outline" value={`${cattle.weight} kg`} />
+              <View style={styles.infoDivider} />
+              <InfoPill icon="pricetag-outline" value={cattle.earTag} />
+            </View>
 
-        {/* Custom tab bar */}
-        <View style={styles.tabBar}>
-          <TouchableOpacity
-            style={[styles.tab, !isAgentTab && styles.tabActive]}
-            onPress={navigateVitals}
-            activeOpacity={0.8}
-          >
-            <Ionicons
-              name="pulse"
-              size={18}
-              color={!isAgentTab ? Colors.primary : Colors.gray400}
-            />
-            <Text style={[styles.tabText, !isAgentTab && styles.tabTextActive]}>
-              Vitals
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, isAgentTab && styles.tabActive]}
-            onPress={navigateAgent}
-            activeOpacity={0.8}
-          >
-            <Ionicons
-              name="chatbubbles"
-              size={18}
-              color={isAgentTab ? Colors.primary : Colors.gray400}
-            />
-            <Text style={[styles.tabText, isAgentTab && styles.tabTextActive]}>
-              AI Agent
-            </Text>
-          </TouchableOpacity>
-        </View>
+            {/* Custom tab bar */}
+            <View style={styles.tabBar}>
+              <TouchableOpacity
+                style={[styles.tab, styles.tabActive]}
+                onPress={navigateVitals}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="pulse" size={18} color={Colors.primary} />
+                <Text style={[styles.tabText, styles.tabTextActive]}>{t('vitals.tabVitals')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.tab}
+                onPress={navigateAgent}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="chatbubbles" size={18} color={Colors.gray400} />
+                <Text style={styles.tabText}>{t('vitals.tabAgent')}</Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
 
         {/* Tab content */}
         <View style={styles.content}>
@@ -171,6 +182,36 @@ function InfoPill({ icon, value }: { icon: string; value: string }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.primary },
+  containerAgent: { backgroundColor: Colors.white },
+  compactHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: Colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.gray100,
+    gap: 10,
+  },
+  compactBackBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.gray50,
+  },
+  compactCenter: { flex: 1 },
+  compactTitle: { fontSize: 16, fontWeight: '700', color: Colors.gray800 },
+  compactSubtitle: { fontSize: 12, color: Colors.gray400, marginTop: 1 },
+  compactSwitch: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.primaryLight,
+  },
   statusBarSeparator: { height: 1, backgroundColor: 'rgba(255,255,255,0.25)' },
   loadingContainer: {
     flex: 1,

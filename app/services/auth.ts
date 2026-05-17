@@ -14,7 +14,7 @@ function mapUser(raw: Record<string, unknown>): User {
   };
 }
 
-export async function sendOtp(phone: string): Promise<{ requestId: string }> {
+export async function sendOtp(phone: string): Promise<{ requestId: string; otp?: string }> {
   return apiRequest('/api/auth/send-otp', {
     method: 'POST',
     body: JSON.stringify({ phone }),
@@ -34,6 +34,37 @@ export async function googleLogin(googleIdToken: string): Promise<AuthResult> {
     '/api/auth/google',
     { method: 'POST', body: JSON.stringify({ googleIdToken }) },
   );
+  return { user: mapUser(res.user), token: res.token, isNewUser: res.isNewUser };
+}
+
+export async function registerWithEmail(
+  email: string,
+  password: string,
+  fullName?: string,
+): Promise<AuthResult> {
+  const res = await apiRequest<{
+    user: Record<string, unknown>;
+    token: string;
+    isNewUser: boolean;
+  }>('/api/auth/register', {
+    method: 'POST',
+    body: JSON.stringify({ email, password, ...(fullName ? { fullName } : {}) }),
+  });
+  return { user: mapUser(res.user), token: res.token, isNewUser: res.isNewUser };
+}
+
+export async function loginWithEmail(
+  email: string,
+  password: string,
+): Promise<AuthResult> {
+  const res = await apiRequest<{
+    user: Record<string, unknown>;
+    token: string;
+    isNewUser: boolean;
+  }>('/api/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+  });
   return { user: mapUser(res.user), token: res.token, isNewUser: res.isNewUser };
 }
 

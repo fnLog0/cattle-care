@@ -135,12 +135,15 @@ export default function CreateCattleScreen() {
       </View>
 
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
         style={{ flex: 1 }}
       >
         <ScrollView
+          style={{ flex: 1 }}
           contentContainerStyle={styles.form}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
           showsVerticalScrollIndicator={false}
         >
           {/* Photo */}
@@ -282,7 +285,7 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 18, fontWeight: '700', color: Colors.gray800 },
   form: {
     padding: 20,
-    paddingBottom: 40,
+    paddingBottom: 320,
     gap: 20,
   },
   field: { gap: 6 },

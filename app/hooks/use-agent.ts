@@ -1,26 +1,32 @@
 import { useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Message, Cattle } from '@/types';
 import * as agentService from '@/services/agent';
-import { RegistrationState } from '@/services/agent';
+import { RegistrationState, type AgentLanguage } from '@/services/agent';
+import { useLocation } from './use-location';
 
 type AgentMode = 'registration' | 'health';
 
 export function useAgent(mode: AgentMode, cattle?: Cattle) {
-  const [messages, setMessages] = useState<Message[]>(() => {
-    const welcomeContent =
-      mode === 'registration'
-        ? agentService.getRegistrationWelcome()
-        : agentService.getHealthWelcome(cattle);
+  const { t, i18n } = useTranslation();
+  const language: AgentLanguage = i18n.language === 'hi' ? 'hi' : 'en';
+  const { coords } = useLocation();
 
-    return [
-      {
-        id: 'welcome',
-        role: 'assistant' as const,
-        content: welcomeContent,
-        timestamp: new Date().toISOString(),
-      },
-    ];
-  });
+  const welcomeContent =
+    mode === 'registration'
+      ? agentService.getRegistrationWelcome()
+      : cattle?.name
+        ? t('agent.welcomeFor', { name: cattle.name })
+        : t('agent.welcome');
+
+  const [messages, setMessages] = useState<Message[]>(() => [
+    {
+      id: 'welcome',
+      role: 'assistant' as const,
+      content: welcomeContent,
+      timestamp: new Date().toISOString(),
+    },
+  ]);
 
   const [isTyping, setIsTyping] = useState(false);
   const [registrationState, setRegistrationState] = useState<RegistrationState>(
@@ -51,7 +57,10 @@ export function useAgent(mode: AgentMode, cattle?: Cattle) {
             setIsRegistrationComplete(true);
           }
         } else {
-          responseContent = await agentService.chatHealth(content, cattle);
+          responseContent = await agentService.chatHealth(content, cattle, {
+            language,
+            ...(coords ? { location: coords } : {}),
+          });
         }
 
         const assistantMsg: Message = {
@@ -66,7 +75,7 @@ export function useAgent(mode: AgentMode, cattle?: Cattle) {
         setIsTyping(false);
       }
     },
-    [mode, cattle, registrationState]
+    [mode, cattle, registrationState, language, coords]
   );
 
   const resetChat = useCallback(() => {
@@ -74,16 +83,13 @@ export function useAgent(mode: AgentMode, cattle?: Cattle) {
       {
         id: 'welcome',
         role: 'assistant',
-        content:
-          mode === 'registration'
-            ? agentService.getRegistrationWelcome()
-            : agentService.getHealthWelcome(cattle),
+        content: welcomeContent,
         timestamp: new Date().toISOString(),
       },
     ]);
     setRegistrationState(agentService.getInitialRegistrationState());
     setIsRegistrationComplete(false);
-  }, [mode, cattle]);
+  }, [welcomeContent]);
 
   return {
     messages,

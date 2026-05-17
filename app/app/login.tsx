@@ -25,13 +25,19 @@ WebBrowser.maybeCompleteAuthSession();
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { sendOtp, googleLogin } = useAuth();
+  const { sendOtp, googleLogin, loginWithEmail } = useAuth();
 
   const { t } = useTranslation();
   const [phone, setPhone] = useState('');
   const [phoneError, setPhoneError] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+
+  const [email, setEmail] = useState('');
+  const [pwd, setPwd] = useState('');
+  const [showPwd, setShowPwd] = useState(false);
+  const [emailError, setEmailError] = useState('');
+  const [isEmailSigningIn, setIsEmailSigningIn] = useState(false);
 
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
     clientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID ?? '',
@@ -83,8 +89,11 @@ export default function LoginScreen() {
     if (!validate()) return;
     setIsSending(true);
     try {
-      await sendOtp(phone.trim());
-      router.push({ pathname: '/otp', params: { phone: phone.trim() } });
+      const { otp } = await sendOtp(phone.trim());
+      router.push({
+        pathname: '/otp',
+        params: { phone: phone.trim(), ...(otp ? { otp } : {}) },
+      });
     } catch (e) {
       Alert.alert(t('login.sendFailed'), (e as Error).message ?? 'Please try again.');
     } finally {
@@ -95,6 +104,27 @@ export default function LoginScreen() {
   function handleGooglePress() {
     setIsGoogleLoading(true);
     promptAsync();
+  }
+
+  async function handleEmailLogin() {
+    if (!/^\S+@\S+\.\S+$/.test(email.trim())) {
+      setEmailError('Enter a valid email');
+      return;
+    }
+    if (!pwd) {
+      setEmailError('Enter your password');
+      return;
+    }
+    setEmailError('');
+    setIsEmailSigningIn(true);
+    try {
+      await loginWithEmail(email.trim().toLowerCase(), pwd);
+      router.replace('/(tabs)');
+    } catch (e) {
+      setEmailError((e as Error).message ?? 'Sign in failed');
+    } finally {
+      setIsEmailSigningIn(false);
+    }
   }
 
   return (
@@ -178,6 +208,80 @@ export default function LoginScreen() {
           </TouchableOpacity>
 
           <Text style={styles.note}>{t('login.note')}</Text>
+
+          {/* Email + password */}
+          <View style={styles.divider}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>or email</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
+          <View style={styles.fieldContainer}>
+            <Text style={styles.label}>Email</Text>
+            <View style={[styles.inputWrapper, emailError ? styles.inputError : null]}>
+              <Ionicons name="mail-outline" size={18} color={Colors.gray400} />
+              <TextInput
+                style={styles.input}
+                value={email}
+                onChangeText={(v) => {
+                  setEmail(v);
+                  setEmailError('');
+                }}
+                placeholder="you@example.com"
+                placeholderTextColor={Colors.gray400}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                returnKeyType="next"
+              />
+            </View>
+          </View>
+
+          <View style={styles.fieldContainer}>
+            <Text style={styles.label}>Password</Text>
+            <View style={[styles.inputWrapper, emailError ? styles.inputError : null]}>
+              <Ionicons name="lock-closed-outline" size={18} color={Colors.gray400} />
+              <TextInput
+                style={styles.input}
+                value={pwd}
+                onChangeText={(v) => {
+                  setPwd(v);
+                  setEmailError('');
+                }}
+                placeholder="Your password"
+                placeholderTextColor={Colors.gray400}
+                secureTextEntry={!showPwd}
+                returnKeyType="go"
+                onSubmitEditing={handleEmailLogin}
+              />
+              <TouchableOpacity onPress={() => setShowPwd((p) => !p)}>
+                <Ionicons
+                  name={showPwd ? 'eye-off-outline' : 'eye-outline'}
+                  size={18}
+                  color={Colors.gray400}
+                />
+              </TouchableOpacity>
+            </View>
+            {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
+          </View>
+
+          <TouchableOpacity
+            style={[styles.sendButton, isEmailSigningIn && styles.buttonDisabled]}
+            onPress={handleEmailLogin}
+            disabled={isEmailSigningIn}
+            activeOpacity={0.85}
+          >
+            {isEmailSigningIn ? (
+              <ActivityIndicator color={Colors.white} />
+            ) : (
+              <Text style={styles.sendButtonText}>Sign in with Email</Text>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={() => router.push('/register')} style={styles.altLink}>
+            <Text style={styles.altText}>
+              No account? <Text style={styles.altLinkText}>Create one</Text>
+            </Text>
+          </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -233,4 +337,7 @@ const styles = StyleSheet.create({
     fontSize: 13, color: Colors.gray400,
     textAlign: 'center', marginTop: 16, lineHeight: 18,
   },
+  altLink: { alignItems: 'center', paddingVertical: 12 },
+  altText: { fontSize: 14, color: Colors.gray600 },
+  altLinkText: { color: Colors.primary, fontWeight: '700' },
 });

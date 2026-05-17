@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { LineChart } from 'react-native-gifted-charts';
+import { useTranslation } from 'react-i18next';
 import { Colors } from '@/constants/theme';
 import { STRESS_COLORS } from '@/constants/stress';
 import type { VitalsReading } from '@/services/vitals';
@@ -19,6 +20,7 @@ function formatShortDate(iso: string): string {
 }
 
 export function VitalsTrendChart({ readings, rangeLabel }: Props) {
+  const { t } = useTranslation();
   const points = useMemo(
     () =>
       readings.map((r, idx) => ({
@@ -32,7 +34,7 @@ export function VitalsTrendChart({ readings, rangeLabel }: Props) {
   if (readings.length === 0) {
     return (
       <View style={styles.empty}>
-        <Text style={styles.emptyText}>No readings yet — record vitals to see the trend.</Text>
+        <Text style={styles.emptyText}>{t('vitals.trendEmpty')}</Text>
       </View>
     );
   }
@@ -43,7 +45,7 @@ export function VitalsTrendChart({ readings, rangeLabel }: Props) {
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <Text style={styles.title}>Strain Index Trend</Text>
+        <Text style={styles.title}>{t('vitals.trendTitle')}</Text>
         {rangeLabel ? <Text style={styles.subtitle}>{rangeLabel}</Text> : null}
       </View>
       <LineChart
@@ -72,11 +74,11 @@ export function VitalsTrendChart({ readings, rangeLabel }: Props) {
         endSpacing={8}
       />
       <View style={styles.legend}>
-        <LegendDot color={STRESS_COLORS.none} label="none" />
-        <LegendDot color={STRESS_COLORS.mild} label="mild" />
-        <LegendDot color={STRESS_COLORS.moderate} label="moderate" />
-        <LegendDot color={STRESS_COLORS.severe} label="severe" />
-        <LegendDot color={STRESS_COLORS.danger} label="danger" />
+        <LegendDot color={STRESS_COLORS.none} label={t('stress.none').toLowerCase()} />
+        <LegendDot color={STRESS_COLORS.mild} label={t('stress.mild').toLowerCase()} />
+        <LegendDot color={STRESS_COLORS.moderate} label={t('stress.moderate').toLowerCase()} />
+        <LegendDot color={STRESS_COLORS.severe} label={t('stress.severe').toLowerCase()} />
+        <LegendDot color={STRESS_COLORS.danger} label={t('stress.danger').toLowerCase()} />
       </View>
     </View>
   );

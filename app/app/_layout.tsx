@@ -2,6 +2,7 @@ import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
 import 'react-native-reanimated';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 import '@/i18n';
 
 import { AuthProvider } from '@/context/auth-context';
@@ -69,8 +70,10 @@ function RootLayoutNav() {
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <RootLayoutNav />
-    </AuthProvider>
+    <KeyboardProvider>
+      <AuthProvider>
+        <RootLayoutNav />
+      </AuthProvider>
+    </KeyboardProvider>
   );
 }

@@ -1,12 +1,5 @@
 import React, { useState } from 'react';
-import {
-  View,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-} from 'react-native';
+import { View, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
 
@@ -37,10 +30,12 @@ export function ChatInput({ onSend, disabled = false, placeholder = 'Type a mess
           onChangeText={setText}
           placeholder={placeholder}
           placeholderTextColor={Colors.gray400}
-          multiline
           maxLength={500}
           returnKeyType="send"
+          // Enter key sends and keyboard stays open for the next reply
           onSubmitEditing={handleSend}
+          blurOnSubmit={false}
+          submitBehavior="submit"
           editable={!disabled}
         />
         <TouchableOpacity

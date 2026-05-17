@@ -13,6 +13,7 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { Colors } from '@/constants/theme';
 import { recordStress } from '@/services/vitals';
 
@@ -31,6 +32,7 @@ export function RecordVitalsSheet({
   onClose,
   onRecorded,
 }: Props) {
+  const { t } = useTranslation();
   const [temp, setTemp] = useState('');
   const [resp, setResp] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -46,11 +48,11 @@ export function RecordVitalsSheet({
     const tempNum = parseFloat(temp);
     const respNum = parseFloat(resp);
     if (!temp.trim() || Number.isNaN(tempNum) || tempNum < 30 || tempNum > 45) {
-      setError('Temperature must be between 30 and 45 °C');
+      setError(t('vitals.sheetErrTemp'));
       return;
     }
     if (!resp.trim() || Number.isNaN(respNum) || respNum < 1 || respNum > 200) {
-      setError('Respiration rate must be between 1 and 200 breaths/min');
+      setError(t('vitals.sheetErrResp'));
       return;
     }
     setError('');
@@ -61,8 +63,11 @@ export function RecordVitalsSheet({
         respirationRate: respNum,
       });
       Alert.alert(
-        '✓ Vitals recorded',
-        `Strain Index: ${result.strainIndex.toFixed(2)} (${result.stressLevel})`,
+        `✓ ${t('vitals.sheetSuccess')}`,
+        t('vitals.sheetSuccessMsg', {
+          si: result.strainIndex.toFixed(2),
+          level: t(`stress.${result.stressLevel}`),
+        }),
         [
           {
             text: 'OK',
@@ -75,7 +80,7 @@ export function RecordVitalsSheet({
         ],
       );
     } catch (e) {
-      setError((e as Error).message ?? 'Failed to record vitals');
+      setError((e as Error).message ?? t('vitals.sheetErrFail'));
     } finally {
       setIsSaving(false);
     }
@@ -91,17 +96,19 @@ export function RecordVitalsSheet({
         <View style={styles.sheet}>
           <View style={styles.handle} />
           <View style={styles.titleRow}>
-            <Text style={styles.title}>Record Vitals{cattleName ? ` — ${cattleName}` : ''}</Text>
+            <Text style={styles.title}>
+              {t('vitals.sheetTitle')}{cattleName ? ` — ${cattleName}` : ''}
+            </Text>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
               <Ionicons name="close" size={22} color={Colors.gray600} />
             </TouchableOpacity>
           </View>
 
           <View style={styles.content}>
-            <Text style={styles.label}>Rectal Temperature (°C)</Text>
+            <Text style={styles.label}>{t('vitals.sheetTempLabel')}</Text>
             <TextInput
               style={[styles.input, error && temp ? styles.inputError : null]}
-              placeholder="e.g. 38.5"
+              placeholder={t('vitals.sheetTempPlaceholder')}
               placeholderTextColor={Colors.gray400}
               value={temp}
               onChangeText={(v) => {
@@ -111,10 +118,10 @@ export function RecordVitalsSheet({
               keyboardType="decimal-pad"
             />
 
-            <Text style={styles.label}>Respiration Rate (breaths/min)</Text>
+            <Text style={styles.label}>{t('vitals.sheetRespLabel')}</Text>
             <TextInput
               style={[styles.input, error && resp ? styles.inputError : null]}
-              placeholder="e.g. 35"
+              placeholder={t('vitals.sheetRespPlaceholder')}
               placeholderTextColor={Colors.gray400}
               value={resp}
               onChangeText={(v) => {
@@ -137,7 +144,7 @@ export function RecordVitalsSheet({
               ) : (
                 <>
                   <Ionicons name="pulse" size={18} color={Colors.white} />
-                  <Text style={styles.saveBtnText}>Record</Text>
+                  <Text style={styles.saveBtnText}>{t('vitals.sheetSubmit')}</Text>
                 </>
               )}
             </TouchableOpacity>

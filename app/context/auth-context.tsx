@@ -12,9 +12,15 @@ type AuthContextType = {
   token: string | null;
   isLoggedIn: boolean;
   isLoading: boolean;
-  sendOtp: (phone: string) => Promise<void>;
+  sendOtp: (phone: string) => Promise<{ otp?: string }>;
   verifyOtp: (phone: string, otp: string) => Promise<{ isNewUser: boolean }>;
   googleLogin: (idToken: string) => Promise<{ isNewUser: boolean }>;
+  registerWithEmail: (
+    email: string,
+    password: string,
+    fullName?: string,
+  ) => Promise<{ isNewUser: boolean }>;
+  loginWithEmail: (email: string, password: string) => Promise<{ isNewUser: boolean }>;
   logout: () => Promise<void>;
   updateUser: (data: { fullName?: string; image?: string }) => Promise<void>;
 };
@@ -57,7 +63,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const sendOtp = useCallback(async (phone: string) => {
-    await authService.sendOtp(phone);
+    const res = await authService.sendOtp(phone);
+    return { otp: res.otp };
   }, []);
 
   const verifyOtp = useCallback(async (phone: string, otp: string) => {
@@ -68,6 +75,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const googleLogin = useCallback(async (idToken: string) => {
     const result = await authService.googleLogin(idToken);
+    await persistSession(result.user, result.token);
+    return { isNewUser: result.isNewUser };
+  }, []);
+
+  const registerWithEmail = useCallback(
+    async (email: string, password: string, fullName?: string) => {
+      const result = await authService.registerWithEmail(email, password, fullName);
+      await persistSession(result.user, result.token);
+      return { isNewUser: result.isNewUser };
+    },
+    [],
+  );
+
+  const loginWithEmail = useCallback(async (email: string, password: string) => {
+    const result = await authService.loginWithEmail(email, password);
     await persistSession(result.user, result.token);
     return { isNewUser: result.isNewUser };
   }, []);
@@ -101,6 +123,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         sendOtp,
         verifyOtp,
         googleLogin,
+        registerWithEmail,
+        loginWithEmail,
         logout,
         updateUser,
       }}

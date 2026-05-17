@@ -5,6 +5,7 @@ export const UserRowSchema = z.object({
   phone: z.string().nullable(),
   google_id: z.string().nullable(),
   email: z.string().nullable(),
+  password_hash: z.string().nullable(),
   full_name: z.string().nullable(),
   profile_image: z.string().nullable(),
   status: z.enum(['active', 'notActive', 'banned']),

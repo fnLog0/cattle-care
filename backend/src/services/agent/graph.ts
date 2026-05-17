@@ -23,6 +23,7 @@ function buildGraph() {
       userMessage: null,
       latitude: null,
       longitude: null,
+      language: null,
       conversationId: null,
       cattle: null,
       recentMessages: null,
@@ -60,6 +61,7 @@ export async function runHealthAgent(input: AgentInput): Promise<AgentResult> {
     userMessage: input.userMessage,
     latitude: input.latitude,
     longitude: input.longitude,
+    language: input.language,
   };
 
   const final = (await compiledGraph.invoke(initial as AgentState)) as AgentState;

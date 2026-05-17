@@ -6,6 +6,7 @@ import { getUserByGoogleIdOrEmail } from '../../db/users/queries';
 import { createUserByGoogle, linkGoogleToUser } from '../../db/users/mutations';
 import { createSession } from '../../db/sessions/mutations';
 import { getUserById } from '../../db/users/queries';
+import { publicUser } from './serialize';
 
 const schema = z.object({
   googleIdToken: z.string().min(1),
@@ -46,5 +47,5 @@ export async function googleAuthHandler(c: AppContext) {
   const token = generateToken();
   await createSession(db, user.id, token);
 
-  return success(c, { user, token, isNewUser }, 201);
+  return success(c, { user: publicUser(user), token, isNewUser }, 201);
 }

@@ -5,6 +5,7 @@ export type UserRow = {
   phone: string | null;
   google_id: string | null;
   email: string | null;
+  password_hash: string | null;
   full_name: string | null;
   profile_image: string | null;
   status: 'active' | 'notActive' | 'banned';

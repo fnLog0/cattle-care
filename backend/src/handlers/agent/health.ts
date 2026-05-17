@@ -9,6 +9,7 @@ const schema = z.object({
   message: z.string().min(1).max(2000),
   latitude: z.number().min(-90).max(90).optional(),
   longitude: z.number().min(-180).max(180).optional(),
+  language: z.enum(['en', 'hi']).optional(),
 });
 
 function resolveProvider(env: AppContext['env']): {
@@ -37,7 +38,7 @@ export async function healthAgentHandler(c: AppContext) {
     return error(c, `Agent is not configured for provider "${provider}"`, 500);
   }
 
-  const { cattleId, message, latitude, longitude } = parsed.data;
+  const { cattleId, message, latitude, longitude, language } = parsed.data;
 
   try {
     const result = await runHealthAgent({
@@ -50,6 +51,7 @@ export async function healthAgentHandler(c: AppContext) {
       userMessage: message,
       latitude,
       longitude,
+      language,
     });
     return success(c, result);
   } catch (err) {

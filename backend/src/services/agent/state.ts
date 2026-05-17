@@ -7,6 +7,8 @@ import type { AgentProvider } from './tools';
 export const HISTORY_LIMIT = 20;
 export const VITALS_TREND_LIMIT = 10;
 
+export type AgentLanguage = 'en' | 'hi';
+
 export type AgentInput = {
   db: D1Database;
   provider: AgentProvider;
@@ -17,6 +19,7 @@ export type AgentInput = {
   userMessage: string;
   latitude?: number;
   longitude?: number;
+  language?: AgentLanguage;
 };
 
 export type AgentResult = {
@@ -40,6 +43,7 @@ export type AgentState = {
   userMessage: string;
   latitude?: number;
   longitude?: number;
+  language?: AgentLanguage;
 
   // Resolved by loadContext
   conversationId: string;

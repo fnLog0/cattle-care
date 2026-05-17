@@ -2,6 +2,7 @@ import { z } from 'zod';
 import type { AppContext } from '../../types';
 import { success, error } from '../../utils/responses';
 import { updateUserProfile } from '../../db/users/mutations';
+import { publicUser } from './serialize';
 
 const schema = z.object({
   fullName: z.string().min(1).max(100).optional(),
@@ -23,5 +24,5 @@ export async function updateProfileHandler(c: AppContext) {
 
   if (!updated) return error(c, 'No fields to update');
 
-  return success(c, updated);
+  return success(c, publicUser(updated));
 }

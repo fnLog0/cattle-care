@@ -3,11 +3,15 @@
   "main": "src/index.ts",
   "compatibility_date": "2024-11-01",
   "compatibility_flags": ["nodejs_compat"],
+  "dev": {
+    "ip": "0.0.0.0",
+    "port": 8787
+  },
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "cattle-care-db",
-      "database_id": "YOUR_DATABASE_ID_HERE"
+      "database_id": "81503d0e-9ca0-46a4-ba99-b6694342c33f"
     }
   ],
   "r2_buckets": [

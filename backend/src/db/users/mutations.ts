@@ -13,6 +13,34 @@ export async function createUserByPhone(
     .run();
 }
 
+export async function createUserByEmailPassword(
+  db: D1Database,
+  id: string,
+  email: string,
+  passwordHash: string,
+  fullName: string | null,
+): Promise<void> {
+  await db
+    .prepare(
+      'INSERT INTO users (id, email, password_hash, full_name) VALUES (?, ?, ?, ?)',
+    )
+    .bind(id, email, passwordHash, fullName)
+    .run();
+}
+
+export async function setUserPasswordHash(
+  db: D1Database,
+  userId: string,
+  passwordHash: string,
+): Promise<void> {
+  await db
+    .prepare(
+      "UPDATE users SET password_hash = ?, updated_at = datetime('now') WHERE id = ?",
+    )
+    .bind(passwordHash, userId)
+    .run();
+}
+
 export async function createUserByGoogle(
   db: D1Database,
   id: string,

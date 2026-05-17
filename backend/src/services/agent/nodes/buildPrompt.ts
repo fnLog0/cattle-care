@@ -7,6 +7,7 @@ export function buildPrompt(state: AgentState): Partial<AgentState> {
       state.cattle,
       state.environmentalStress,
       state.vitalsHistory,
+      state.language,
     ),
   };
 }

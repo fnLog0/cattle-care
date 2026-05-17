@@ -6,6 +6,7 @@ import { verifyOtp } from '../../services/msg91';
 import { getUserByPhone } from '../../db/users/queries';
 import { createUserByPhone } from '../../db/users/mutations';
 import { createSession } from '../../db/sessions/mutations';
+import { publicUser } from './serialize';
 
 const schema = z.object({
   phone: z.string().regex(/^[6-9]\d{9}$/, 'Invalid Indian phone number'),
@@ -44,5 +45,5 @@ export async function verifyOtpHandler(c: AppContext) {
   const token = generateToken();
   await createSession(db, user.id, token);
 
-  return success(c, { user, token, isNewUser }, 201);
+  return success(c, { user: publicUser(user), token, isNewUser }, 201);
 }

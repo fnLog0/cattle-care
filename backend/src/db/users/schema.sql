@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS users (
   phone TEXT UNIQUE,
   google_id TEXT UNIQUE,
   email TEXT UNIQUE COLLATE NOCASE,
+  password_hash TEXT,
   full_name TEXT,
   profile_image TEXT,
   status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'notActive', 'banned')),

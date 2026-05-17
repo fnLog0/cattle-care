@@ -101,3 +101,66 @@ export async function getEnvironmentalStress(
     timestamp: new Date().toISOString(),
   };
 }
+
+export type ForecastHour = {
+  time: string;
+  temperature: number;
+  humidity: number;
+  thi: number;
+  stressLevel: StressLevel;
+};
+
+const MAX_FORECAST_HOURS = 48;
+
+/**
+ * Fetch hourly forecast (up to MAX_FORECAST_HOURS) and compute THI per hour.
+ * Cached separately from the "current" call so the smaller payload above
+ * stays cheap.
+ */
+export async function getEnvironmentalForecast(
+  latitude: number,
+  longitude: number,
+  hours: number,
+): Promise<ForecastHour[]> {
+  const clamped = Math.max(1, Math.min(MAX_FORECAST_HOURS, hours));
+  const lat = roundCoord(latitude);
+  const lon = roundCoord(longitude);
+  const url = `${OPEN_METEO_URL}?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,relative_humidity_2m&forecast_hours=${clamped}`;
+  const cacheKey = new Request(url);
+  const cache = caches.default;
+
+  let res = await cache.match(cacheKey);
+  if (!res) {
+    const upstream = await fetch(url);
+    if (!upstream.ok) {
+      throw new Error(`Weather API failed: ${upstream.status} ${upstream.statusText}`);
+    }
+    res = new Response(upstream.body, upstream);
+    res.headers.set('Cache-Control', `public, s-maxage=${WEATHER_CACHE_TTL_SECONDS}`);
+    await cache.put(cacheKey, res.clone());
+  }
+
+  const data = await res.json<{
+    hourly: {
+      time: string[];
+      temperature_2m: number[];
+      relative_humidity_2m: number[];
+    };
+  }>();
+
+  const { time, temperature_2m, relative_humidity_2m } = data.hourly;
+  const out: ForecastHour[] = [];
+  for (let i = 0; i < time.length && i < clamped; i++) {
+    const t = temperature_2m[i]!;
+    const h = relative_humidity_2m[i]!;
+    const thi = calculateTHI(t, h);
+    out.push({
+      time: time[i]!,
+      temperature: t,
+      humidity: h,
+      thi: Math.round(thi * 100) / 100,
+      stressLevel: classifyStress(thi),
+    });
+  }
+  return out;
+}

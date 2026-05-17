@@ -1,6 +1,7 @@
 import type { CattleRow } from '../../db/cattle';
 import type { VitalsRow } from '../../db/vitals';
 import type { THIResult } from '../thi';
+import type { AgentLanguage } from './state';
 
 function describeTrend(history: VitalsRow[]): string {
   if (history.length === 0) {
@@ -24,10 +25,16 @@ function describeTrend(history: VitalsRow[]): string {
   return `Last ${history.length} reading(s), oldest first (direction: ${direction}):\n${lines.join('\n')}`;
 }
 
+const LANGUAGE_INSTRUCTIONS: Record<AgentLanguage, string> = {
+  en: 'Respond in English.',
+  hi: 'पूरा उत्तर हिन्दी में दें (Respond entirely in Hindi, using Devanagari script). Keep numbers and units as-is. Stress levels should be translated: none → सामान्य, mild → हल्का, moderate → मध्यम, severe → गंभीर, danger → खतरनाक.',
+};
+
 export function buildSystemPrompt(
   cattle: CattleRow,
   environmentalStress: THIResult | undefined,
   vitalsHistory: VitalsRow[] = [],
+  language: AgentLanguage = 'en',
 ): string {
   const envBlock = environmentalStress
     ? `2. Environmental stress (THI):
@@ -66,8 +73,17 @@ Reasoning rules:
   recommend shade, water, cooling, ventilation.
 - If both are elevated → the environment is amplifying an underlying issue.
   Mitigate the environment first, then re-check vitals.
-- Always cite the numbers you used. Always say WHICH signal you are acting on.
 - If the trend shows recent improvement after a prior alert, acknowledge it.
 - If the trend shows deterioration, escalate (vet contact, immediate action).
-- Keep replies short, specific, and actionable. Avoid generic platitudes.`;
+
+Output style — IMPORTANT:
+- Be concise. Aim for 1–3 short sentences (≤ 60 words) unless the farmer
+  explicitly asks for a step-by-step plan.
+- Lead with the verdict, then 1 number that supports it, then ONE action.
+- No preambles ("Based on the data…", "Let me analyze…").
+- No restating the question. No bullet lists unless the farmer asks for steps.
+- Cite at most one specific number per reply (the most relevant SI or THI).
+- Use plain words. Avoid medical jargon unless naming a specific concern.
+
+Language: ${LANGUAGE_INSTRUCTIONS[language]}`;
 }

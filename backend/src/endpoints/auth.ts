@@ -5,6 +5,8 @@ import {
   sendOtpHandler,
   verifyOtpHandler,
   googleAuthHandler,
+  registerHandler,
+  loginHandler,
   meHandler,
   updateProfileHandler,
   logoutHandler,
@@ -17,6 +19,8 @@ export const authRouter = new Hono<AppEnv>();
 authRouter.post('/send-otp', sendOtpHandler);
 authRouter.post('/verify-otp', verifyOtpHandler);
 authRouter.post('/google', googleAuthHandler);
+authRouter.post('/register', registerHandler);
+authRouter.post('/login', loginHandler);
 
 // Protected
 authRouter.use('/*', auth);

@@ -19,4 +19,7 @@ run() {
 # 2026-05: cattle gains an image_url column (R2 upload pipeline)
 run "Add cattle.image_url" "ALTER TABLE cattle ADD COLUMN image_url TEXT;"
 
+# 2026-05: users gain a password_hash column (email/password auth)
+run "Add users.password_hash" "ALTER TABLE users ADD COLUMN password_hash TEXT;"
+
 echo "All migrations attempted."

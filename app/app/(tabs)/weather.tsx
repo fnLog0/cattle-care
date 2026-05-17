@@ -6,9 +6,9 @@ import {
   ScrollView,
   ActivityIndicator,
   RefreshControl,
-  SafeAreaView,
   Dimensions,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { LineChart } from 'react-native-gifted-charts';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';

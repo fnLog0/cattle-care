@@ -7,25 +7,22 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
-      "channel": "development",
       "env": {
         "EXPO_PUBLIC_API_URL": "http://localhost:8787"
       }
     },
     "preview": {
       "distribution": "internal",
-      "channel": "preview",
       "android": { "buildType": "apk" },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://cattle-care-api.workers.dev"
+        "EXPO_PUBLIC_API_URL": "https://cattle-care-api.fnlog10.workers.dev"
       }
     },
     "production": {
-      "channel": "production",
       "autoIncrement": true,
       "android": { "buildType": "app-bundle" },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://cattle-care-api.workers.dev"
+        "EXPO_PUBLIC_API_URL": "https://cattle-care-api.fnlog10.workers.dev"
       }
     }
   },

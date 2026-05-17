@@ -1,0 +1,63 @@
+name: Build app (EAS)
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'app/**'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/build-app.yml'
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: 'EAS build profile'
+        required: true
+        default: 'preview'
+        type: choice
+        options: [development, preview, production]
+
+concurrency:
+  group: app-build-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type-check app
+        working-directory: app
+        run: pnpm exec tsc --noEmit
+
+      - name: EAS build (Android)
+        working-directory: app
+        env:
+          # Push pipelines run the preview profile by default; manual runs
+          # honor the workflow_dispatch input above.
+          PROFILE: ${{ github.event.inputs.profile || 'preview' }}
+        run: |
+          eas build \
+            --non-interactive \
+            --no-wait \
+            --profile "$PROFILE" \
+            --platform android
